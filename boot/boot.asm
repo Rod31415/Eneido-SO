@@ -115,7 +115,7 @@ start_protected_mode:
 	
 	mov ebp, 0x90000		; 32 bit stack base pointer
 	mov esp, ebp
-	
+
     jmp KERNEL_LOCATION
 
 
