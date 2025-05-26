@@ -1,5 +1,5 @@
 [org 0x7c00]                        
-KERNEL_LOCATION equ 0x1000
+KERNEL_LOCATION equ 0x0200
                                     
 SECTOR_LOCATION equ 0x0f00
 MEMORY_LOCATION equ 0x0f10
