@@ -1,0 +1,167 @@
+#include "../headers/functions.h"
+#include "../headers/key_codes.h"
+#include "../headers/types.h"
+#include "../kernel/kernel.h"
+#define colsPerRow 80
+
+int32 globalColumn;
+int32 globalRow;
+uint8 actualColor=0xf0;
+
+void backspace(){
+if(globalColumn!=0){
+	globalColumn--;
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=' ';
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+}
+
+}
+
+void sleep(){
+for(int i=0;i<1000000;i++){
+__asm__ __volatile__ ("nop");
+}
+}
+
+void nextPosition(){
+globalColumn++;
+if(globalColumn==colsPerRow){globalColumn=0;globalRow++;}
+};
+
+void printDec(int32 dec){
+int32 digNum=0;
+int32 digits[10]={0,0,0,0,0,0,0,0,0,0};
+	if(dec==0){
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=48;	
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	nextPosition();
+	return;
+	}
+
+	while(dec){
+	digits[digNum]=dec%10;
+	dec/=10;
+	digNum++;	
+	
+	}
+
+	for(int32 i=digNum-1;i>=0;i--){
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=digits[i]+48;
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	nextPosition();	
+	}
+}
+
+void printHex(int32 hex){
+
+}
+
+void printHex(uint8 hex){
+
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=((hex&0x0f)>9?(hex&0x0f+55):(hex&0x0f+48));
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	nextPosition();
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=((hex&0xf0)/16>9?((hex&0xf0)/16+55):((hex&0xf0)/16+48));
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	nextPosition();
+
+}
+
+void printFlo(float flo){
+
+} 
+
+void printBin(int32 bin){
+
+if(bin==0){
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=48;
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	nextPosition();
+	}
+int32 ref=0x80;
+	while(ref){
+		if(bin&ref==ref){
+			*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=49;
+			*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+			nextPosition();
+		}
+		else{
+			*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=48;	
+			*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+			nextPosition();
+		}
+		ref>>=1;
+
+	}
+
+}
+
+void printChr(int32 chr){
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=(uint8)(chr&255);
+	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	nextPosition();
+
+}
+
+
+void changeColor(uint8 color)
+{
+actualColor=color;
+
+}
+
+void gotoxy(int32 x,int32 y){
+globalColumn=x;
+globalRow=y;
+}
+
+void printf(const char* str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int32 arg4){
+int32 i=0;
+
+int32 args[5];
+args[0]=arg0;
+args[1]=arg1;
+args[2]=arg2;
+args[3]=arg3;
+int32 argNum=0;
+	while(str[i]!=0){
+		if(str[i]=='%'){
+		if(str[i+1]=='d'){printDec(args[argNum]);i+=2;argNum++;continue;}
+		if(str[i+1]=='x'){printHex(args[argNum]);i+=2;argNum++;continue;}
+		if(str[i+1]=='f'){printFlo(args[argNum]);i+=2;argNum++;continue;}
+		if(str[i+1]=='b'){printBin(args[argNum]);i+=2;argNum++;continue;}
+		if(str[i+1]=='c'){printChr(args[argNum]);i+=2;argNum++;continue;}
+		}
+		else if(str[i]=='/'&&str[i+1]=='n'){
+		globalColumn=0;
+		globalRow++;
+		i+=2;
+		continue;
+
+		}
+		*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=str[i];
+		*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+		i++;
+		nextPosition();
+}
+}
+
+void cls(uint8 color){
+for(int32 j=0;j<25;j++){
+for(int32 i=0;i<colsPerRow;i++){
+*(char*)(0xb8000+(i+j*colsPerRow)*2)=' ';
+*(char*)(0xb8000+(i+j*colsPerRow)*2+1)=color;
+}
+}
+
+globalColumn=0;
+globalRow=0;
+
+}
+
+
+void putChar(int32 x, int32 y, char character,uint8 color){
+*(char*)(0xb8000+(x+y*colsPerRow)*2)=character;
+*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=color;
+}
+
