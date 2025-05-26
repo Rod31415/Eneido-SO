@@ -1,6 +1,7 @@
 #include "../headers/utilities.h"
 
 char lastkey=' ';
+uint8 shiftOn=0;
 
 uint8 inport(uint16 port){
 uint8 rv;
@@ -28,35 +29,52 @@ char recordLastKey(uint8 input){
 return getKeyboardKey(input);
 }
 char getKeyboardKey(uint8 input){
+if(input==42)shiftOn=1;
+if(input==170)shiftOn=0;
 
 switch(input){
-	case 30:return 'a';break;
-	case 48:return 'b';break;
-	case 46:return 'c';break;
-	case 32:return 'd';break;
-	case 18:return 'e';break;
-	case 33:return 'f';break;
-	case 34:return 'g';break;
-	case 35:return 'h';break;
-	case 23:return 'i';break;
-	case 36:return 'j';break;
-	case 37:return 'k';break;
-	case 38:return 'l';break;
-	case 50:return 'm';break;
-	case 49:return 'n';break;
-	case 39:return 'n';break;
-	case 24:return 'o';break;
-	case 25:return 'p';break;
-	case 16:return 'q';break;
-	case 19:return 'r';break;
-	case 31:return 's';break;
-	case 20:return 't';break;
-	case 22:return 'u';break;
-	case 47:return 'v';break;
-	case 17:return 'w';break;
-	case 45:return 'x';break;
-	case 21:return 'y';break;
-	case 44:return 'z';break;
+	case 30:return (shiftOn)?'A':'a';break;
+	case 48:return (shiftOn)?'B':'b';break;
+	case 46:return (shiftOn)?'C':'c';break;
+	case 32:return (shiftOn)?'D':'d';break;
+	case 18:return (shiftOn)?'E':'e';break;
+	case 33:return (shiftOn)?'F':'f';break;
+	case 34:return (shiftOn)?'G':'g';break;
+	case 35:return (shiftOn)?'H':'h';break;
+	case 23:return (shiftOn)?'I':'i';break;
+	case 36:return (shiftOn)?'J':'j';break;
+	case 37:return (shiftOn)?'K':'k';break;
+	case 38:return (shiftOn)?'L':'l';break;
+	case 50:return (shiftOn)?'M':'m';break;
+	case 49:return (shiftOn)?'N':'n';break;
+	case 39:return (shiftOn)?'N':'n';break;
+	case 24:return (shiftOn)?'O':'o';break;
+	case 25:return (shiftOn)?'P':'p';break;
+	case 16:return (shiftOn)?'Q':'q';break;
+	case 19:return (shiftOn)?'R':'r';break;
+	case 31:return (shiftOn)?'S':'s';break;
+	case 20:return (shiftOn)?'T':'t';break;
+	case 22:return (shiftOn)?'U':'u';break;
+	case 47:return (shiftOn)?'V':'v';break;
+	case 17:return (shiftOn)?'W':'w';break;
+	case 45:return (shiftOn)?'X':'x';break;
+	case 21:return (shiftOn)?'Y':'y';break;
+	case 44:return (shiftOn)?'Z':'z';break;
+	case 2 :return (shiftOn)?'!':'1';break;
+	case 3 :return (shiftOn)?'"':'2';break;
+	case 4 :return (shiftOn)?'#':'3';break;
+	case 5 :return (shiftOn)?'$':'4';break;
+	case 6 :return (shiftOn)?'%':'5';break;
+	case 7 :return (shiftOn)?'&':'6';break;
+	case 8 :return (shiftOn)?'/':'7';break;
+	case 9 :return (shiftOn)?'(':'8';break;
+	case 10:return (shiftOn)?')':'9';break;
+	case 11:return (shiftOn)?'=':'0';break;
+	case 52:return (shiftOn)?':':'.';break;
+	case 51:return (shiftOn)?';':',';break;
+	case 53:return (shiftOn)?'_':'-';break;
+//	case 11:return (shiftOn)?'=':'0';break;
+	
 	case 57:return ' ';break;	
 }
 return 0;

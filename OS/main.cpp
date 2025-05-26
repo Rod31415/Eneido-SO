@@ -25,7 +25,7 @@ void drawOpenSource(){
 	printf("  #####################/n");
 	printf("  #########   #########/n");
 	printf("#########       #########/n");
-	printf("#########       #########/n");
+	printf("#########   #   #########/n");
 	printf("#########       #########/n");
 	printf("  ########     ########/n");
 	printf("  ########     ########/n");
@@ -60,6 +60,7 @@ char ch=0,s=0;
 	ch=s;
 	s=getKeyboardKey(character);
 	if(s!=ch&&s!=0){
+	//gotoxy(1,18);
 	printf("%c",s);}
 		if(character==28){printf("/n");}
 		if(character==14){backspace();}
