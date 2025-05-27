@@ -1,12 +1,9 @@
 [org 0x7c00]                        
-KERNEL_LOCATION equ 0x0200
+KERNEL_LOCATION equ 0x1000
                                     
-SECTOR_LOCATION equ 0x0f00
-MEMORY_LOCATION equ 0x0f10
 
-mov [BOOT_DISK], dl    
-mov al,40            
-mov [SECTOR_LOCATION],al
+mov [BOOT_DISK], dl                 
+
                                     
 xor ax, ax                          
 mov es, ax
@@ -14,54 +11,26 @@ mov ds, ax
 mov bp, 0x8000
 mov sp, bp
 
+mov bx, KERNEL_LOCATION
+mov dh, 30
 
+mov ah, 0x02
+mov al, dh 
+mov ch, 0x00
+mov dh, 0x00
+mov cl, 0x02
+mov dl, [BOOT_DISK]
+int 0x13                ; no error management, do your homework!
+
+                                    
 mov ah, 0x0
 mov al, 0x3
-int 0x10 
-mov ax,[SECTOR_LOCATION]
-mov [blkcnt],ax
-jmp cont
-;mov bx, KERNEL_LOCATION
-;mov dh, 40
+int 0x10                ; text mode
 
-;mov ah, 0x02
-;mov al, dh 
-;mov ch, 0x00
-;mov dh, 0x00
-;mov cl, 0x02
-;mov dl, [BOOT_DISK]
+;mov si, message
+;call print
 
-
-DAPACK:
-    db 0x10
-    db 0
-blkcnt: dw 20
-db_add: dw 0x1000
-dw 0
-d_lba: dd 1
-dd 0
-cont:
-mov si,DAPACK
-mov ah,0x42
-mov dl,0x80
-
-int 0x13                ; no error management, do your homework!
-mov [SECTOR_LOCATION],al
-jc error
-jmp normal
-error:
-mov ah,0Eh
-mov al,'E'
-int 0x10
-jmp $
-normal:
-int 0x12
-mov [MEMORY_LOCATION],ax
-
-          
-               ; text mode
-
-
+;jmp $
 
 CODE_SEG equ GDT_code - GDT_start
 DATA_SEG equ GDT_data - GDT_start
@@ -75,20 +44,34 @@ jmp CODE_SEG:start_protected_mode
 
 jmp $
                                     
-BOOT_DISK: db 0x80
+BOOT_DISK: db 0
+
+print:
+mov al, [si]
+printloop:
+cmp al,0
+je done
+mov al, [si]
+mov ah, 0eh
+int 0x10
+inc si
+jmp printloop
+done:
+ret
+
 
 GDT_start:
     GDT_null:
-        dd 0
-        dd 0
+        dd 0x0
+        dd 0x0
 
     GDT_code:
         dw 0xffff
-        dw 0
-        db 0
+        dw 0x0
+        db 0x0
         db 0b10011010
         db 0b11001111
-        db 0
+        db 0x0
 
     GDT_data:
         dw 0xffff
@@ -103,7 +86,8 @@ GDT_end:
 GDT_descriptor:
     dw GDT_end - GDT_start - 1
     dd GDT_start
-	
+
+
 [bits 32]
 start_protected_mode:
     mov ax, DATA_SEG
@@ -119,5 +103,11 @@ start_protected_mode:
     jmp KERNEL_LOCATION
 
 
+
+	
+
+;message: db "Holaaa",0
+                                     
+ 
 times 510-($-$$) db 0              
 dw 0xaa55

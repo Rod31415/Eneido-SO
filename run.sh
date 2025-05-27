@@ -22,5 +22,5 @@ i386-elf-ld -o "bin/full_kernel.bin" -Ttext 0x1000 "bin/kernelE.o" "bin/kernel.o
 
 sudo cat "bin/boot.bin" "bin/full_kernel.bin" "bin/zeroes.bin"> "bin/OS.bin"
 
-qemu-system-x86_64 -drive format=raw,file="bin/OS.bin"
+qemu-system-i386 -drive format=raw,file="bin/OS.bin" -m 1M
 
