@@ -1,46 +1,57 @@
+[bits 16]
 [org 0x7c00]                        
 KERNEL_LOCATION equ 0x1000
-                                    
+SECTOR_LOCATION equ 0x0f00
+MEMORY_LOCATION equ 0x0f10
+
 
 mov [BOOT_DISK], dl                 
 
-                                    
-xor ax, ax                          
-mov es, ax
+
+
+xor ax, ax      
 mov ds, ax
+mov es, ax
 mov bp, 0x8000
 mov sp, bp
 
+
+
 mov bx, KERNEL_LOCATION
-mov dh, 30
-
-mov ah, 0x02
-mov al, dh 
-mov ch, 0x00
 mov dh, 0x00
-mov cl, 0x02
 mov dl, [BOOT_DISK]
-int 0x13                ; no error management, do your homework!
-
-                                    
+mov cl, 0x02
+mov ch, 0x00
+mov ah, 0x02
+mov al, 20
+int 0x13     
+jc disk_error
+mov [SECTOR_LOCATION],al                       
 mov ah, 0x0
 mov al, 0x3
-int 0x10                ; text mode
+int 0x10     
 
-;mov si, message
-;call print
+int 0x12
+mov [MEMORY_LOCATION],ax
 
-;jmp $
+mov si,message
+call print
 
-CODE_SEG equ GDT_code - GDT_start
-DATA_SEG equ GDT_data - GDT_start
+jmp toPM
 
+disk_error:
+jmp $
+
+CODE_SEG equ 0x8
+DATA_SEG equ 0x10
+
+toPM:
 cli
 lgdt [GDT_descriptor]
 mov eax, cr0
-or eax, 1
+or al, 1
 mov cr0, eax
-jmp CODE_SEG:start_protected_mode
+jmp CODE_SEG:start_pm
 
 jmp $
                                     
@@ -89,7 +100,7 @@ GDT_descriptor:
 
 
 [bits 32]
-start_protected_mode:
+start_pm:
     mov ax, DATA_SEG
 	mov ds, ax
 	mov ss, ax
@@ -99,14 +110,14 @@ start_protected_mode:
 	
 	mov ebp, 0x90000		; 32 bit stack base pointer
 	mov esp, ebp
-
+	
     jmp KERNEL_LOCATION
 
 
 
 	
 
-;message: db "Holaaa",0
+message: db "Holaaa",0
                                      
  
 times 510-($-$$) db 0              

@@ -8,6 +8,6 @@ void outport(uint16 port,uint8 data);
 void bflush();
 char recordLastKey(uint8 input);
 uint8 keyboard_read();
-char getKeyboardKey(uint8 input);
+uint8 getKeyboardKey(uint8 input);
 
 #endif

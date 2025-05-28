@@ -28,7 +28,7 @@ return 0;
 char recordLastKey(uint8 input){
 return getKeyboardKey(input);
 }
-char getKeyboardKey(uint8 input){
+uint8 getKeyboardKey(uint8 input){
 if(input==42)shiftOn=1;
 if(input==170)shiftOn=0;
 
@@ -73,6 +73,8 @@ switch(input){
 	case 52:return (shiftOn)?':':'.';break;
 	case 51:return (shiftOn)?';':',';break;
 	case 53:return (shiftOn)?'_':'-';break;
+	case 14:return 129;break;
+	case 28:return 128;break;
 //	case 11:return (shiftOn)?'=':'0';break;
 	
 	case 57:return ' ';break;	

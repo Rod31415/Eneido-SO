@@ -53,17 +53,17 @@ drawOpenSource();
 gotoxy(0,18);
 changeColor(0x0f);
 printf("-");
-char ch=0,s=0;
+uint8 ch=0,s=0;
 	while(1){
 	for(int i=0;i<1;i++)sleep();
 	character=inport(0x60);
 	ch=s;
 	s=getKeyboardKey(character);
-	if(s!=ch&&s!=0){
+	if(s!=ch&&s!=0&&s<128){
 	//gotoxy(1,18);
-	printf("%c",s);}
-		if(character==28){printf("/n");}
-		if(character==14){backspace();}
+	printf("%c",(char)s);}
+		if(s==128&&ch!=129){printf("/n");}
+		if(s==129&&ch!=129){backspace();}
 
 	}
 
