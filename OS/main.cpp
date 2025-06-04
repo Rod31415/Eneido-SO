@@ -46,7 +46,6 @@ printf("Memoria Disponible: %d KB",a);
 }
 
 void __main(){
-	
 	cls(0x0f);
 	uint8 character=0;
 drawOpenSource();

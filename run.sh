@@ -14,13 +14,12 @@ i386-elf-g++ -ffreestanding -m32 -c -g "OS/main.cpp" -o "bin/main.o"
 #g++ -m32 -c -g "function/utilities.cpp" -o "bin/utilities.o"
 #g++ -m32 -c -g "OS/main.cpp" -o "bin/main.o"
 
-
 #gcc -o "bin/full_kernel.bin" -Ttext=0x1000 "bin/kernelE.o" "bin/kernel.o" "bin/functions.o" "bin/utilities.o" "bin/main.o" -Wl,--oformat=binary -z noexecstack
 
-i386-elf-ld -o "bin/full_kernel.bin" -Ttext 0x1000 "bin/kernelE.o" "bin/kernel.o" "bin/functions.o" "bin/utilities.o" "bin/main.o" -z noexecstack --oformat binary
+i386-elf-ld -o "ENEIDOISO/boot/kernel.elf" -T linker.ld -m elf_i386 "bin/kernelE.o" "bin/kernel.o" "bin/functions.o" "bin/utilities.o" "bin/main.o" -z noexecstack
 
-sudo cat "bin/boot.bin" "bin/full_kernel.bin" "bin/zeroes.bin"> "bin/OS.bin"
+grub-mkrescue -o ENEIDO.iso ENEIDOISO/
+#sudo cat "bin/boot.bin" "bin/full_kernel.bin" "bin/zeroes.bin" >"bin/OS.bin"
 
-qemu-system-i386 -fda "bin/OS.bin"
+qemu-system-i386 "ENEIDO.iso"
 #-drive format=raw,file="bin/OS.bin"
-

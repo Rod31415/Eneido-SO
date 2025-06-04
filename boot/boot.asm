@@ -1,6 +1,6 @@
 [bits 16]
 [org 0x7c00]                        
-KERNEL_LOCATION equ 0x1000
+KERNEL_LOCATION equ 0x7e00
 SECTOR_LOCATION equ 0x0f00
 MEMORY_LOCATION equ 0x0f10
 
@@ -12,18 +12,22 @@ mov [BOOT_DISK], dl
 xor ax, ax      
 mov ds, ax
 mov es, ax
+cli
 mov bp, 0x8000
 mov sp, bp
+sti
 
+mov ah,0x42
+mov dl,[BOOT_DISK]
+mov si, DPACK
 
-
-mov bx, KERNEL_LOCATION
-mov dh, 0x00
-mov dl, [BOOT_DISK]
-mov cl, 0x02
-mov ch, 0x00
-mov ah, 0x02
-mov al, 20
+;mov bx, KERNEL_LOCATION
+;mov dh, 0x00
+;mov dl, [BOOT_DISK]
+;mov cl, 0x02
+;mov ch, 0x00
+;mov ah, 0x02
+;mov al, 20
 int 0x13     
 jc disk_error
 mov [SECTOR_LOCATION],al                       
@@ -49,9 +53,9 @@ toPM:
 cli
 lgdt [GDT_descriptor]
 mov eax, cr0
-or al, 1
+or eax, 1
 mov cr0, eax
-jmp CODE_SEG:start_pm
+jmp 0x08:start_pm
 
 jmp $
                                     
@@ -69,6 +73,16 @@ inc si
 jmp printloop
 done:
 ret
+
+
+DPACK:
+db 10h
+db 0
+dw 20
+dw 0x7e00
+dw 0
+dd 1
+dd 0
 
 
 GDT_start:
@@ -111,7 +125,7 @@ start_pm:
 	mov ebp, 0x90000		; 32 bit stack base pointer
 	mov esp, ebp
 	
-    jmp KERNEL_LOCATION
+    jmp 0x08:KERNEL_LOCATION
 
 
 

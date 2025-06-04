@@ -2,20 +2,21 @@
 #include "../headers/key_codes.h"
 #include "../headers/types.h"
 #include "../kernel/kernel.h"
+#define VGA_MEMORY_ADDRESS 0xb8000
 #define colsPerRow 80
 
-int32 globalColumn;
-int32 globalRow;
-uint8 actualColor=0xf0;
+int32 globalColumn=0,globalRow=0;
+char actualColor=0;
 
 void backspace(){
 if(globalColumn!=0){
 	globalColumn--;
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=' ';
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=' ';
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 }
 
 }
+
 
 void sleep(){
 for(int i=0;i<1000000;i++){
@@ -32,8 +33,8 @@ void printDec(int32 dec){
 int32 digNum=0;
 int32 digits[10]={0,0,0,0,0,0,0,0,0,0};
 	if(dec==0){
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=48;	
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=48;	
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 	nextPosition();
 	return;
 	}
@@ -46,8 +47,8 @@ int32 digits[10]={0,0,0,0,0,0,0,0,0,0};
 	}
 
 	for(int32 i=digNum-1;i>=0;i--){
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=digits[i]+48;
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=digits[i]+48;
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 	nextPosition();	
 	}
 }
@@ -58,11 +59,11 @@ void printHex(int32 hex){
 
 void printHex(uint8 hex){
 
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=((hex&0x0f)>9?(hex&0x0f+55):(hex&0x0f+48));
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=((hex&0x0f)>9?(hex&0x0f+55):(hex&0x0f+48));
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 	nextPosition();
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=((hex&0xf0)/16>9?((hex&0xf0)/16+55):((hex&0xf0)/16+48));
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=((hex&0xf0)/16>9?((hex&0xf0)/16+55):((hex&0xf0)/16+48));
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 	nextPosition();
 
 }
@@ -74,20 +75,20 @@ void printFlo(float flo){
 void printBin(int32 bin){
 
 if(bin==0){
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=48;
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=48;
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 	nextPosition();
 	}
 int32 ref=0x80;
 	while(ref){
 		if(bin&ref==ref){
-			*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=49;
-			*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+			*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=49;
+			*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 			nextPosition();
 		}
 		else{
-			*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=48;	
-			*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+			*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=48;	
+			*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 			nextPosition();
 		}
 		ref>>=1;
@@ -97,8 +98,8 @@ int32 ref=0x80;
 }
 
 void printChr(int32 chr){
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=(uint8)(chr&255);
-	*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=(uint8)(chr&255);
+	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 	nextPosition();
 
 }
@@ -139,8 +140,8 @@ int32 argNum=0;
 		continue;
 
 		}
-		*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2)=str[i];
-		*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+		*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=str[i];
+		*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
 		i++;
 		nextPosition();
 }
@@ -149,8 +150,8 @@ int32 argNum=0;
 void cls(uint8 color){
 for(int32 j=0;j<25;j++){
 for(int32 i=0;i<colsPerRow;i++){
-*(char*)(0xb8000+(i+j*colsPerRow)*2)=' ';
-*(char*)(0xb8000+(i+j*colsPerRow)*2+1)=color;
+*(char*)(VGA_MEMORY_ADDRESS+(i+j*colsPerRow)*2)=' ';
+*(char*)(VGA_MEMORY_ADDRESS+(i+j*colsPerRow)*2+1)=color;
 }
 }
 
@@ -161,7 +162,7 @@ globalRow=0;
 
 
 void putChar(int32 x, int32 y, char character,uint8 color){
-*(char*)(0xb8000+(x+y*colsPerRow)*2)=character;
-*(char*)(0xb8000+(globalColumn+globalRow*colsPerRow)*2+1)=color;
+*(char*)(VGA_MEMORY_ADDRESS+(x+y*colsPerRow)*2)=character;
+*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=color;
 }
 
