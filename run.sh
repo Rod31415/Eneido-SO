@@ -1,8 +1,8 @@
 export PATH=$PATH:/usr/local/i386elfgcc/bin
 
-nasm "boot/boot.asm" -f bin -o "bin/boot.bin"
+#nasm "boot/boot.asm" -f bin -o "bin/boot.bin"
 nasm "kernel/kernel.asm" -f elf -o "bin/kernelE.o"
-nasm "boot/zeroes.asm" -f bin -o "bin/zeroes.bin"
+#nasm "boot/zeroes.asm" -f bin -o "bin/zeroes.bin"
 
 i386-elf-g++ -ffreestanding -m32 -c -g "kernel/kernel.cpp" -o "bin/kernel.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "function/functions.cpp" -o "bin/functions.o"
@@ -20,6 +20,13 @@ i386-elf-ld -o "ENEIDOISO/boot/kernel.elf" -T linker.ld -m elf_i386 "bin/kernelE
 
 grub-mkrescue -o ENEIDO.iso ENEIDOISO/
 #sudo cat "bin/boot.bin" "bin/full_kernel.bin" "bin/zeroes.bin" >"bin/OS.bin"
+
+#REMOVE ALL NON USE FILES
+rm bin/kernelE.o
+rm bin/kernel.o
+rm bin/functions.o
+rm bin/utilities.o
+rm bin/main.o
 
 qemu-system-i386 "ENEIDO.iso"
 #-drive format=raw,file="bin/OS.bin"
