@@ -17,7 +17,7 @@
  
  */ 
 
-void drawOpenSource(){
+/*void drawOpenSource(){
 	changeColor(0x02);
 	printf("          #####/n");
 	printf("      #############/n");
@@ -44,27 +44,31 @@ address=0x0f10;
 a=*(int32*)address;
 printf("Memoria Disponible: %d KB",a);
 }
-
-void __main(){
-	cls(0x0f);
+*/
+void __main(multiboot_info *mboot){
+	/*cls(0x0f);
 	uint8 character=0;
 drawOpenSource();
 gotoxy(0,18);
 changeColor(0x0f);
 printf("-");
 uint8 ch=0,s=0;
-	while(1){
+//showMem(0xb8000,0xb8100);
+while(1){
 	for(int i=0;i<1;i++)sleep();
 	character=inport(0x60);
 	ch=s;
 	s=getKeyboardKey(character);
-	if(s==128&&ch!=129){printf("/n");}
+	if(s==128&&ch!=128){printf("/n");}
 		if(s==129&&ch!=129){backspace();}
-  if(s!=ch&&s!=0&&s<128){
-	//gotoxy(1,18);
+  if(s!=ch&&s!=0&&s<128){	
 	printf("%c",(char)s);}
 		
 
-	}
+	}*/
+  init_term(mboot);
+  while(1){
 
+    loop_term();
+  }
 }

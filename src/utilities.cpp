@@ -3,6 +3,19 @@
 char lastkey=' ';
 uint8 shiftOn=0;
 
+
+void memcpy(uint32 origin,uint32 destiny,uint32 size){
+
+  for(uint32 i=0;i<size;i++){
+  *(uint8*)(destiny+i)=*(uint8*)(origin+i);
+  }
+}
+void memset(uint32 address,uint8 num,uint32 size){
+
+  for(uint32 i=0;i<size;i++){
+  *(uint8*)(address+i)=num;
+  }
+}
 uint8 inport(uint16 port){
 uint8 rv;
 __asm__ __volatile__ ("inb %1, %0" : "=a"(rv) : "dN"(port));

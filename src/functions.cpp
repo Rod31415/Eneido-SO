@@ -16,7 +16,15 @@ if(globalColumn!=0){
 }
 
 }
+void scrollDown(){
 
+  memcpy(VGA_MEMORY_ADDRESS+160,VGA_MEMORY_ADDRESS,3840);
+  for(uint8 i=0;i<160;i+=2){
+  *(char*)(VGA_MEMORY_ADDRESS+3840+i)=' ';
+	*(char*)(VGA_MEMORY_ADDRESS+3840+i+1)=actualColor; 
+  }
+
+}
 
 void sleep(){
 for(int i=0;i<1000000;i++){
@@ -53,11 +61,8 @@ int32 digits[10]={0,0,0,0,0,0,0,0,0,0};
 	}
 }
 
-void printHex(int32 hex){
 
-}
-
-void printHex(uint8 hex){
+void printHex(uint32 hex){
 
 	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=((hex&0x0f)>9?(hex&0x0f+55):(hex&0x0f+48));
 	*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
@@ -136,7 +141,16 @@ int32 argNum=0;
 		else if(str[i]=='/'&&str[i+1]=='n'){
 		globalColumn=0;
 		globalRow++;
-		i+=2;
+		if(globalRow>24){
+      globalRow--;
+      scrollDown();
+    }
+    if(str[i+3]=='n'){
+    *(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2)=str[i+2];
+		*(char*)(VGA_MEMORY_ADDRESS+(globalColumn+globalRow*colsPerRow)*2+1)=actualColor;
+		nextPosition();i+=2;}
+
+    i+=2;
 		continue;
 
 		}
@@ -160,6 +174,15 @@ globalRow=0;
 
 }
 
+void update_cursor(uint32 x, uint32 y)
+{
+	uint16 pos = y * colsPerRow + x;
+
+	outport(0x3D4, 0x0F);
+	outport(0x3D5, (uint8) (pos & 0xFF));
+	outport(0x3D4, 0x0E);
+	outport(0x3D5, (uint8) ((pos >> 8) & 0xFF));
+}
 
 void putChar(int32 x, int32 y, char character,uint8 color){
 *(char*)(VGA_MEMORY_ADDRESS+(x+y*colsPerRow)*2)=character;

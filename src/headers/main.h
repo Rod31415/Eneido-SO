@@ -6,9 +6,9 @@
 #include "types.h"
 #include "key_codes.h"
 #include "kernel.h"
-
-//#include "subfunctions.h"
-
-void __main();
+#include "mem.h"
+#include "term.h"
+#include "multiboot.h"
+void __main(multiboot_info *mboot);
 
 #endif
