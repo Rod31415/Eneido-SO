@@ -6,6 +6,7 @@
 #include "string.h"
 #include "mem.h"
 #include "vfs.h"
+#include "exec.h"
 void init_term(multiboot_info *mboot);
 void new_line_term();
 void loop_term();

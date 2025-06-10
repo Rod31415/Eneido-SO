@@ -3,11 +3,11 @@
 GDT_Entry gdt[3];
 struct gdt_ptr gp;
 extern "C" uint32 gpt;
-extern "C" void gdt_flush(void* gptr);
+extern "C" void gdt_flush(void *gptr);
 
-//extern "C" void switch_to_real_mode(void *gptr);
+// extern "C" void switch_to_real_mode(void *gptr);
 
-//extern "C" void readDisk(void);
+// extern "C" void readDisk(void);
 
 void gdt_set_gate(int num, unsigned long base, unsigned long limit, unsigned char access, unsigned char gran)
 {
@@ -31,11 +31,6 @@ void gdt_install()
     gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
 
     gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
-    
+
     gdt_flush(&gp);
 }
-
-
-
-
-

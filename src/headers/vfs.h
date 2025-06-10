@@ -32,5 +32,6 @@ void writeDirectory(DIR buffer,uint32 cluster,uint32 directory);
 
 int readFiles();
 int changeDirectory(char *name);
+int createDirectory(char *name);
 
 #endif

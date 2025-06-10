@@ -16,8 +16,10 @@ i386-elf-g++ -ffreestanding -m32 -c -g "src/term.cpp" -o "bin/term.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "src/string.cpp" -o "bin/string.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "src/gdt.cpp" -o "bin/gdt.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "src/vfs.cpp" -o "bin/vfs.o"
+i386-elf-g++ -ffreestanding -m32 -c -g "src/exec.cpp" -o "bin/exec.o"
+i386-elf-g++ -ffreestanding -m32 -c -g "src/exec/snake.cpp" -o "bin/snake.o"
 
-i386-elf-ld -o "grub/boot/kernel.elf" -T linker.ld -m elf_i386 "bin/vfs.o" "bin/realEntry.o" "bin/gdt.o" "bin/string.o" "bin/term.o" "bin/kernelE.o" "bin/kernel.o" "bin/functions.o" "bin/utilities.o" "bin/mem.o" "bin/main.o" -z noexecstack
+i386-elf-ld -o "grub/boot/kernel.elf" -T linker.ld -m elf_i386 "bin/snake.o" "bin/exec.o" "bin/vfs.o" "bin/realEntry.o" "bin/gdt.o" "bin/string.o" "bin/term.o" "bin/kernelE.o" "bin/kernel.o" "bin/functions.o" "bin/utilities.o" "bin/mem.o" "bin/main.o" -z noexecstack
 
 grub-mkrescue -o ENEIDO.iso grub/
 #sudo cat "bin/boot.bin" "bin/full_kernel.bin" "bin/zeroes.bin" >"bin/OS.bin"
@@ -34,5 +36,7 @@ rm bin/string.o
 rm bin/gdt.o
 rm bin/realEntry.o
 rm bin/vfs.o
+rm bin/exec.o
+rm bin/snake.o
 
 qemu-system-i386 "ENEIDO.iso"
