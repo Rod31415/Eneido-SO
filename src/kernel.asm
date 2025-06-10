@@ -11,6 +11,7 @@ start:
     mov esp, stack_top
 
     push ebx
+    
     call _main
     cli
 _loop:  

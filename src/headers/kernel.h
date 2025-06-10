@@ -5,6 +5,8 @@
 #include "utilities.h"
 #include "functions.h"
 #include "multiboot.h"
+#include "vfs.h"
+#include "gdt.h"
 /*
 typedef struct{
     uint32 flags;            // Flags indicating which fields are valid
