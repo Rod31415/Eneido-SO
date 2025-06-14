@@ -19,10 +19,17 @@ void memset(uint32 address, uint8 num, uint32 size)
 		*(uint8 *)(address + i) = num;
 	}
 }
+
 uint8 inport(uint16 port)
 {
 	uint8 rv;
 	__asm__ __volatile__("inb %1, %0" : "=a"(rv) : "dN"(port));
+	return rv;
+}
+uint16 inportw(uint16 port)
+{
+	uint16 rv;
+	__asm__ __volatile__("inw %1, %0" : "=a"(rv) : "dN"(port));
 	return rv;
 }
 
@@ -184,19 +191,24 @@ uint8 getKeyboardKey(uint8 input)
 	case 28:
 		return 128;
 		break;
-	case 80:
+	case 80://down
 		return 130;
     break;
-	case 75:
+	case 75://left
 		return 131;
     break;
-	case 72:
+	case 72://up
 		return 132;
     break;
-	case 77:
+	case 77://right
 		return 133;
     break;
-		//	case 11:return (shiftOn)?'=':'0';break;
+	case 29:
+		return 134;
+    break;
+  case 1:
+		return 135;
+    break;
 
 	case 57:
 		return ' ';

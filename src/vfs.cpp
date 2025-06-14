@@ -1,7 +1,7 @@
 #include "headers/vfs.h"
 
 #define STARTCLUSTER 0x200000
-#define STARTDATACLUSTER 0x204000
+#define STARTDATACLUSTER 0x210000
 
 #define MAXDIRECTIONS 4096
 #define CLUSTERSIZE 512
@@ -30,10 +30,10 @@ void writeDirectory(DIR buffer, uint32 cluster, uint32 directory)
   *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 59) = buffer.nextCluster;
   *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 63) = buffer.nextDirection;
 }
-void writeCluster(uint8 buffer[512], uint32 cluster)
+void writeCluster(uint8 *buffer, uint32 cluster)
 {
   for (uint32 i = 0; i < 512; i++)
-    *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + i) = buffer[i];
+    *(uint8 *)(STARTDATACLUSTER + cluster * CLUSTERSIZE + i) = buffer[i];
 }
 void readDirectory(DIR *buffer, uint32 cluster, uint32 directory)
 {
@@ -46,10 +46,10 @@ void readDirectory(DIR *buffer, uint32 cluster, uint32 directory)
   buffer->nextCluster = *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 59);
   buffer->nextDirection = *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 63);
 }
-void readCluster(uint8 *buffer[512], uint32 cluster)
+void readCluster(uint8 *buffer, uint32 cluster)
 {
   for (uint32 i = 0; i < 512; i++)
-    *buffer[i] = *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + i);
+    buffer[i] = *(uint8 *)(STARTDATACLUSTER + cluster * CLUSTERSIZE + i);
 }
 
 void initVFS()
@@ -66,17 +66,14 @@ void initVFS()
   root.nextDirection = 0;
   writeDirectory(root, 0, 0);
 
-  DIR file = {"file.txt", 1, 1, 512, 0, 1, 1};
+
+DIR file = {"Juegos", 2, 1, 20, 0, 0, 0};
   writeDirectory(file, 1, 0);
-  file = {"new", 2, 1, 20, 0, 0, 0};
-  writeDirectory(file, 1, 1);
   file = {"..", 3, 1, 1, 0, 20, 1};
   writeDirectory(file, 20, 0);
 
-  file = {"ENEIDO.cpp", 1, 1, 513, 0, 20, 2};
+  file = {"snake.exe", 1, 1, 65, 0, 0, 0};
   writeDirectory(file, 20, 1);
-  file = {"LEER.txt", 1, 1, 514, 0, 0, 0};
-  writeDirectory(file, 20, 2);
 
   actualClusterDIR = root.firstcluster;
   actualDirectoryDIR = 0;
@@ -100,7 +97,7 @@ uint32 retClusterFree(uint32 in)
 int createDirectory(char name[49])
 {
   uint32 cl = retClusterFree(1);
-  uint32 cs = retClusterFree(128);
+  uint32 cs = retClusterFree(32);
   DIR folder = {"", 2, 1, (uint32)(cs / 8), cs % 8, 0, 0};
   strcpy(folder.name, name);
   writeDirectory(folder, (uint32)(cl / 8), cl % 8);
@@ -136,6 +133,71 @@ int createDirectory(char name[49])
   actualDirectoryDIR = aux2;
 }
 
+int createFile(char name[49])
+{
+  uint32 cl = retClusterFree(1);
+  uint32 cs = retClusterFree(64);
+  DIR folder = {"", 1, 1, (uint32)(cs / 8), cs % 8, 0, 0};
+  strcpy(folder.name, name);
+  writeDirectory(folder, (uint32)(cl / 8), cl % 8);
+  DIR data = {".",10,1,0,0,0,0};
+  writeDirectory(folder, (uint32)(cs / 8), cs % 8);
+
+  uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
+
+  uint32 ax, ay;
+  DIR actualDir = {};
+  int i = 0;
+  do
+  {
+    ax = actualDir.nextCluster;
+    ay = actualDir.nextDirection;
+    readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
+
+    actualClusterDIR = actualDir.nextCluster;
+    actualDirectoryDIR = actualDir.nextDirection;
+    i++;
+  } while (actualClusterDIR != 0);
+
+  actualDir.nextCluster = (uint32)(cl / 8);
+  actualDir.nextDirection = cl % 8;
+  if (i == 1)
+  {
+    ax = aux1;
+    ay = aux2;
+  }
+  writeDirectory(actualDir, ax, ay);
+
+  actualClusterDIR = aux1;
+  actualDirectoryDIR = aux2;
+}
+
+DIR searchFile(char *name){
+int a = 0;
+  uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
+  DIR actualDir = {};
+  do
+  {
+    readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
+
+    actualClusterDIR = actualDir.nextCluster;
+    actualDirectoryDIR = actualDir.nextDirection;
+    if (strcmp(actualDir.name, name) == 0 && actualDir.flags ==1)
+    {
+      actualClusterDIR=aux1;
+      actualDirectoryDIR=aux2;
+      return actualDir;
+    }
+  } while (actualClusterDIR != 0);
+  actualClusterDIR=aux1;
+  actualDirectoryDIR=aux2;
+  printf("No se encontro el archivo");
+  actualDir.name[0]=0;
+  return actualDir;
+}
+
+
+
 int readFiles()
 {
   DIR actualDir = {};
@@ -156,6 +218,43 @@ int readFiles()
   actualClusterDIR = aux1;
   actualDirectoryDIR = aux2;
   return i;
+}
+
+int treeFileSystem(){
+  DIR actualDir = {};
+  int i = 0;
+  int stack=1;
+
+  uint32 stackCluster[100],stackDirectory[100];
+  uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
+  uint32 max1 = actualClusterDIR, max2 = actualDirectoryDIR;
+  do
+  {
+    i++;
+    readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
+    actualClusterDIR = actualDir.nextCluster;
+    actualDirectoryDIR = actualDir.nextDirection;
+    if (i != 1)
+      printf("/n");
+    changeColor(actualDir.flags == 1 ? 0x0f : 0x03);
+    for(int p=0;p<stack;p++)
+    printf("-");
+    printf(actualDir.name);
+    if(actualDir.flags==2){
+      stackCluster[stack]=max1;
+      stackDirectory[stack]=max2;
+      
+      changeDirectory(actualDir.name);
+      stack++;
+    }
+    if(actualClusterDIR==0&&max1!=aux1&&max2!=aux2){}
+
+  } while (actualClusterDIR != 0);
+  actualClusterDIR = aux1;
+  actualDirectoryDIR = aux2;
+  return i;
+
+
 }
 
 int changeDirectory(char *name)

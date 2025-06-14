@@ -46,6 +46,11 @@ void nextPosition()
 	}
 };
 
+void resetLine(){
+globalColumn=0;
+
+}
+
 void printDec(int32 dec)
 {
 	int32 digNum = 0;
@@ -115,6 +120,8 @@ void printBin(int32 bin)
 		ref >>= 1;
 	}
 }
+
+
 
 void printChr(int32 chr)
 {

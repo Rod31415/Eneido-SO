@@ -7,6 +7,8 @@
 #include "multiboot.h"
 #include "vfs.h"
 #include "gdt.h"
+#include "term.h"
+#include "diskDriver.h"
 /*
 typedef struct{
     uint32 flags;            // Flags indicating which fields are valid

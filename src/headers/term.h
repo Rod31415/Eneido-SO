@@ -6,7 +6,10 @@
 #include "string.h"
 #include "mem.h"
 #include "vfs.h"
-#include "exec.h"
+#include "diskDriver.h"
+#include "editor.h"
+#include "games.h"
+
 void init_term(multiboot_info *mboot);
 void new_line_term();
 void loop_term();

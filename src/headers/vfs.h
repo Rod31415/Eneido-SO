@@ -25,13 +25,15 @@ uint8 nextDirection;
 }__attribute__((packed)) DIR;
 
 void initVFS();
-void readCluster(uint8 *buffer[512],uint32 cluster);
+void readCluster(uint8 *buffer,uint32 cluster);
 void readDirectory(DIR* buffer,uint32 cluster,uint32 directory);
 void writeCluster(uint8 buffer[512],uint32 cluster);
 void writeDirectory(DIR buffer,uint32 cluster,uint32 directory);
 
 int readFiles();
+DIR searchFile(char *name);
 int changeDirectory(char *name);
 int createDirectory(char *name);
+int createFile(char *name);
 
 #endif

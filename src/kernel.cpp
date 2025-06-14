@@ -1,4 +1,3 @@
-#include "headers/main.h"
 #include "headers/kernel.h"
 
 extern "C" void _main(multiboot_info *mboot)
@@ -8,6 +7,20 @@ extern "C" void _main(multiboot_info *mboot)
 
 	initVFS();
 
-	__main(mboot);
+ createFile("Leeme.txt");
+
+ inport(0x3da);
+ outport(0x3c0,0x30);
+ uint8 res=inport(0x3c1);
+ outport(0x3c0,res&0xF7);
+
+  init_term(mboot);
+
+  while (1)
+  {
+
+    loop_term();
+  }
+
 	return;
 }

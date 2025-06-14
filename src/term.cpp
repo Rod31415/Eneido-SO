@@ -1,9 +1,14 @@
 #include "headers/term.h"
 
 uint8 boolOnTest = 0;
+uint16 selectedLine=0;
+uint16 actualLine=0;
+int8 linesHistory[200][80];
+uint32 flags, memLow, memHigh, sect;
 
-void drawOpenSource(uint32 flags, uint32 memLow, uint32 memHigh, uint32 sect)
+void drawOpenSource()
 {
+  gotoxy(0,0);
   changeColor(0x02);
   printf("          #####/n");
   printf("      #############/n");
@@ -37,23 +42,31 @@ void drawOpenSource(uint32 flags, uint32 memLow, uint32 memHigh, uint32 sect)
 uint32 xCursor = 0, yCursor = 0;
 uint8 ch = 0, s = 0;
 uint8 character = 0;
-int8 line[100];
+int8 line[80];
 uint8 indexLetter = 0;
 multiboot_info *mboot;
 uint32 argc;
 int8 argv[10][40];
+uint8 first=0;
 
 void init_term(multiboot_info *mb)
 {
+  if(first==0){
   mboot = mb;
+  flags=mboot->flags;
+  memLow=mboot->mem_lower;
+  memHigh=mboot->mem_upper;
+  sect=mboot->mods_count;}
   cls(0x0f);
-  drawOpenSource(mboot->flags, mboot->mem_lower, mboot->mem_upper, mboot->mods_count);
-  gotoxy(0, 20);
+  first=1;
+  drawOpenSource();
+  gotoxy(0, 19);
   changeColor(0x0f);
   printf(">");
   xCursor = 1;
-  yCursor = 20;
+  yCursor = 19;
   update_cursor(xCursor, yCursor);
+    
 }
 
 void formatCommand()
@@ -116,14 +129,21 @@ void help()
 {
   backspace();
   printf("  Solo tenemos los siguientes comandos: /n /n");
-  printf("   echo    - Mostrar un mensaje en la pantalla /n");
-  printf("   init    - Reiniciar la terminal /n");
-  printf("   help    - Abrir esta ventana /n");
-  printf("   colors  - Abrir una prueba de colores /n");
-  printf("   license - Muesta la licencia y creditos del proyecto /n");
-  printf("   ls      - Listar los archivos del directorio /n");
-  printf("   cd      - Cambiar de directorio /n");
-  printf("   mkdir   - Crear un directorio /n");
+  printf("   echo <mensaje>             - Muestra un mensaje en la pantalla /n");
+  printf("   init                       - Reinicia la terminal /n");
+  printf("   help                       - Abre esta ventana /n");
+  printf("   colors                     - Abre una prueba de colores /n");
+  printf("   license                    - Muestra la licencia y creditos del proyecto /n");
+  printf("   ls                         - Lista los archivos del directorio /n");
+  printf("   cd <directorio>            - Cambia de directorio /n");
+  printf("   mkdir <directorio>         - Crea un directorio /n");
+  printf("   inf <archivo>              - Muestra la informacion del archivo /n");
+  printf("   cat <archivo>              - Muestra el contenido del archivo /n");
+  printf("   touch <archivo>            - Crea un archivo /n");
+  printf("   edit <archivo> <contenido> - Edita un archivo /n");
+  printf("   edit <archivo>             - Abre el archivo con el editor de texto/n");
+  printf("   clusters                   - Abre la ventana del sistema de archivos /n");
+  printf("   games                      - Abre la ventana de juegos /n");
   new_line_term();
 }
 
@@ -133,13 +153,11 @@ void colors()
 
   cls(0x0f);
   gotoxy(0, 0);
-  for (uint16 i = 0; i < 256; i++)
+  for (uint32 i = 0; i < 256; i++)
   {
-    changeColor(i);
-    printf("Prueba ");
+    changeColor((uint8)i);
+    printf("Test ");
 
-    if (i % 11 == 10)
-      printf("/n");
   }
 }
 
@@ -161,6 +179,104 @@ void clear()
   printf(">");
 }
 
+void cat(char *name){
+backspace();
+DIR file=searchFile(name);
+if(file.name[0]==0){return;}
+uint8 buffer[512];
+readCluster(buffer,file.firstcluster*8+file.directions);
+char buff[80];
+for(int i=0;i<80;i++){
+buff[i]=(int8)buffer[i];
+}
+buff[80]=0;
+printf(buff);
+
+}
+
+
+void inf(char *name){
+backspace();
+DIR file=searchFile(name);
+if(file.name[0]==0){return;}
+printf("Nombre: ");
+printf(file.name);
+printf("/nBanderas: %d = ",file.flags);
+printf((file.flags==1)?"Archivo":((file.flags==2)?"Directorio":"Retorno"));
+printf("/nTamanio: %d clusters",file.size);
+printf("/nPrimer Cluster: %d ",file.firstcluster);
+printf("/nPrimer Direccion: %d ",file.directions);
+}
+
+void edit(char *name,char *str){
+DIR file=searchFile(name);
+if(file.name[0]==0){return;}
+for (int i = 0; i < 80; i++)
+  {
+    (str[i] == '"') ? str[i] = ' ' : 0;
+  }
+uint8* buffer=(uint8 *)str;
+writeCluster(buffer,file.firstcluster*8+file.directions);
+}
+
+void editor(char *name){
+DIR file=searchFile(name);
+if(file.name[0]==0){return;}
+initEditor(file);
+}
+
+
+void clusters(){
+
+ boolOnTest = 1;
+
+  cls(0x0f);
+  gotoxy(0, 0);
+  DIR file;
+  for(uint32 j=0;j<500;j++){
+  for (uint32 i = 0; i < 8; i++)
+  {
+    readDirectory(&file,j,i);
+    switch (file.flags) {
+      case 0 :changeColor(0x00);break;
+      case 1 :changeColor(0x01);break;
+      case 2 :changeColor(0x02);break;
+      case 3 :changeColor(0x04);break;
+      case 10:changeColor(0x0f);break;
+    }
+    printf("%c",219);
+    
+
+  }
+
+  }
+
+  changeColor(0x70);
+  gotoxy(0,23);
+  printf("  %c:Cluster vacio ",219);
+  
+  changeColor(0x71);
+  printf("%c",219);
+  changeColor(0x70);
+  printf(":Cluster archivo ");
+  
+  changeColor(0x72);
+  printf("%c",219);
+  changeColor(0x70);
+  printf(":Cluster directorio /n");
+  changeColor(0x74);
+
+  printf("  %c",219);
+  changeColor(0x70);
+  printf(":Cluster retorno ");
+  changeColor(0x7f);
+  printf("%c",219);
+  changeColor(0x70);
+  printf(":Cluster datos                  ");
+}
+
+
+
 void detectCommands()
 {
   if (argv[0][0] == 0)
@@ -168,15 +284,13 @@ void detectCommands()
     return;
   }
 
-  update_cursor(100, 100);
-  comprobeExec(argv[0]);
 
-  if (argc == 1 && strcmp(argv[0], "init", 4) == 0)
+  if (argc == 1 && strcmp(argv[0], "init") == 0)
   {
     init_term(mboot);
   }
 
-  else if (strcmp(argv[0], "echo", 4) == 0)
+  else if (strcmp(argv[0], "echo") == 0)
   {
     echo();
     xCursor = 1;
@@ -185,23 +299,23 @@ void detectCommands()
     update_cursor(xCursor, yCursor);
   }
 
-  else if (argc == 1 && strcmp(argv[0], "help", 4) == 0)
+  else if (argc == 1 && strcmp(argv[0], "help") == 0)
   {
     help();
     xCursor = 1;
-    for (int i = 0; i < 9; i++)
+    for (int i = 0; i < 18; i++)
       if (yCursor < 24)
         yCursor++;
 
     update_cursor(xCursor, yCursor);
   }
 
-  else if (argc == 1 && strcmp(argv[0], "colors", 6) == 0)
+  else if (argc == 1 && strcmp(argv[0], "colors") == 0)
   {
     colors();
   }
 
-  else if (argc == 1 && strcmp(argv[0], "license", 7) == 0)
+  else if (argc == 1 && strcmp(argv[0], "license") == 0)
   {
     license();
     xCursor = 1;
@@ -212,7 +326,7 @@ void detectCommands()
 
     update_cursor(xCursor, yCursor);
   }
-  else if (argc == 1 && strcmp(argv[0], "clear", 5) == 0)
+  else if (argc == 1 && strcmp(argv[0], "clear") == 0)
   {
     clear();
     xCursor = 1;
@@ -220,11 +334,10 @@ void detectCommands()
     update_cursor(xCursor, yCursor);
   }
 
-  else if (argc == 1 && strcmp(argv[0], "ls", 2) == 0)
+  else if (argc == 1 && strcmp(argv[0], "ls") == 0)
   {
     backspace();
     int h = readFiles();
-
     changeColor(0x0f);
     xCursor = 1;
 
@@ -258,6 +371,49 @@ void detectCommands()
     update_cursor(xCursor, yCursor);
   }
 
+  else if (argc == 2 && strcmp(argv[0], "cat") == 0){
+cat(argv[1]);
+
+ if (yCursor < 24)
+        yCursor++;
+      update_cursor(xCursor, yCursor);
+      new_line_term();
+
+  }
+  else if(argc==2&&strcmp(argv[0],"inf")==0){
+inf(argv[1]);
+    for (int i = 0; i < 5; i++)
+ if (yCursor < 24)
+        yCursor++;
+      update_cursor(xCursor, yCursor);
+      new_line_term();
+
+  }
+ else if (argc == 2 && strcmp(argv[0], "touch") == 0)
+  {
+
+    createFile(argv[1]);
+
+    update_cursor(xCursor, yCursor);
+  }
+
+  else if(argc==3 && strcmp(argv[0],"edit")==0){
+    edit(argv[1],argv[2]);
+    update_cursor(xCursor,yCursor);
+
+  }
+  else if(argc==2 && strcmp(argv[0],"edit")==0){
+    editor(argv[1]);
+    init_term(mboot);
+  }
+
+  else if(argc==1 && strcmp(argv[0],"clusters")==0){
+    clusters();
+  }
+
+  else if(argc==1 && strcmp(argv[0],"games")==0){
+    initGameHub();
+  }
   else
   {
     backspace();
@@ -282,9 +438,29 @@ void loop_term()
   character = inport(0x60);
   ch = s;
   s = getKeyboardKey(character);
+
+  if (s == 132 && ch != 132 && actualLine>0){
+    resetLine();
+    printf("                                     ");
+    resetLine();
+    selectedLine--;
+    printf(">");
+    printf(linesHistory[selectedLine]);
+    strcpy(line,linesHistory[selectedLine],80);
+  }
+
+  if (s == 130 && ch != 130 && selectedLine!=actualLine){
+    resetLine();
+    selectedLine++;
+    printf(">");
+    printf(linesHistory[selectedLine]);
+    strcpy(line,linesHistory[selectedLine],80);
+  }
+
   if (s == 128 && ch != 128)
   {
-
+    
+    
     if (boolOnTest)
     {
       boolOnTest = 0;
@@ -296,19 +472,21 @@ void loop_term()
       yCursor++;
     update_cursor(xCursor, yCursor);
     formatCommand();
+    if (argv[0][0] != 0){
+strcpy(linesHistory[actualLine],line,80);
+    actualLine++;
+    selectedLine=actualLine;
+    }
     detectCommands();
+    
   }
   if (s == 129 && ch != 129 && xCursor > 1 && !boolOnTest)
   {
 
-    if (boolOnTest)
-    {
-      boolOnTest = 0;
-      init_term(mboot);
-    }
     backspace();
+    
     indexLetter--;
-    line[indexLetter] = ' ';
+    line[indexLetter] = 0;
     xCursor--;
     update_cursor(xCursor, yCursor);
   }

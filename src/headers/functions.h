@@ -19,5 +19,5 @@ void printf(const char* str, int32 arg0=0, int32 arg1=0, int32 arg2=0, int32 arg
 void resetTTYScreen();
 void putChar(int32 x, int32 y, char character,uint8 color);
 void nextLine();
-
+void resetLine();
 #endif

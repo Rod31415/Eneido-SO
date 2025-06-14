@@ -1,5 +1,36 @@
 #include "headers/string.h"
 
+uint32 lenghtStr(int8 *str){
+uint32 length=0;
+    while (str[length] != 0)
+    {
+      length++;
+    }
+  return length;
+}
+
+void eraseStr(int8 *str,uint32 index,uint32 num){
+if(index+num>lenghtStr(str))return;
+
+for(int i=index;i<lenghtStr(str);i++)
+  {
+  str[i]=str[i+num];
+  }
+}
+
+void insertStr(int8 *str,uint32 index, int8 character){
+
+if(index>lenghtStr(str))return;
+
+for(int i=lenghtStr(str);i>index;i--)
+  {
+  str[i]=str[i-1];
+  }
+str[index]=character;
+
+}
+
+
 int8 strcpy(int8 *str1, int8 *str2, uint16 size)
 {
   if (size == 0)
