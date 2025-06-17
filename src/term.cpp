@@ -23,16 +23,16 @@ void drawOpenSource()
   printf("    #####       #####/n");
   printf("      ###       ###");
 
-  gotoxy(40, 6);
+  gotoxy(41, 1);
   printf("ENEIDO SO ");
-  gotoxy(40, 7);
+  gotoxy(41, 2);
   printf(" 32 bits ");
-  gotoxy(0, 13);
+  gotoxy(34, 4);
 
   changeColor(0x0E);
   printf("   Por Rodrigo Bustos ");
   changeColor(0x02);
-  gotoxy(0, 15);
+  gotoxy(0, 13);
   printf(" Memoria Disponible: %d KB /n", memLow + memHigh);
   printf(" Banderas: %d /n /n", flags);
   changeColor(0x0f);
@@ -57,16 +57,16 @@ void init_term(multiboot_info *mb)
   memLow=mboot->mem_lower;
   memHigh=mboot->mem_upper;
   sect=mboot->mods_count;}
-  cls(0x0f);
+  cls(0x00);
   first=1;
   drawOpenSource();
-  gotoxy(0, 19);
+  gotoxy(0, 17);
   changeColor(0x0f);
   printf(">");
   xCursor = 1;
-  yCursor = 19;
+  yCursor = 17;
   update_cursor(xCursor, yCursor);
-    
+refresh();    
 }
 
 void formatCommand()
@@ -77,7 +77,7 @@ void formatCommand()
   int i;
   for (int j = 0; j < 10; j++)
   {
-    for (i = 0; i < 40; i++)
+    for (i = 0; i < 80; i++)
     {
       argv[j][i] = 0;
     }
@@ -117,7 +117,7 @@ void formatCommand()
 void echo()
 {
   backspace();
-  for (int i = 0; i < 40; i++)
+  for (int i = 0; i < 80; i++)
   {
     (argv[1][i] == '"') ? argv[1][i] = ' ' : 0;
   }
@@ -128,7 +128,10 @@ void echo()
 void help()
 {
   backspace();
+  changeColor(0x07);
   printf("  Solo tenemos los siguientes comandos: /n /n");
+  changeColor(0x0E);
+printf("  Solo tenemos los siguientes comandos: /n /n");
   printf("   echo <mensaje>             - Muestra un mensaje en la pantalla /n");
   printf("   init                       - Reinicia la terminal /n");
   printf("   help                       - Abre esta ventana /n");
@@ -151,14 +154,17 @@ void colors()
 {
   boolOnTest = 1;
 
-  cls(0x0f);
+  cls(0x00);
   gotoxy(0, 0);
   for (uint32 i = 0; i < 256; i++)
   {
-    changeColor((uint8)i);
-    printf("Test ");
 
+    for(uint32 x=0;x<20;x++){
+    for(uint32 y=0;y<12;y++){
+      draw_pixel((i%16)*20+x,(i/16)*12+y,i);
+    }
   }
+}
 }
 
 void license()
@@ -173,7 +179,7 @@ void license()
 
 void clear()
 {
-  cls(0x0f);
+  cls(0x00);
   gotoxy(0, 0);
   changeColor(0x0f);
   printf(">");
@@ -230,32 +236,34 @@ void clusters(){
 
  boolOnTest = 1;
 
-  cls(0x0f);
-  gotoxy(0, 0);
+  cls(0x00);
+  uint8 color=0;
   DIR file;
-  for(uint32 j=0;j<500;j++){
+  for(uint32 j=0;j<4000;j++){
   for (uint32 i = 0; i < 8; i++)
   {
     readDirectory(&file,j,i);
     switch (file.flags) {
-      case 0 :changeColor(0x00);break;
-      case 1 :changeColor(0x01);break;
-      case 2 :changeColor(0x02);break;
-      case 3 :changeColor(0x04);break;
-      case 10:changeColor(0x0f);break;
+      case 0 :color=0;break;
+      case 1 :color=1;break;
+      case 2 :color=2;break;
+      case 3 :color=4;break;
+      case 10:color=0xf;break;
     }
-    printf("%c",219);
+    for(uint8 x=0;x<4;x++)
+    for(uint8 y=0;y<4;y++)
+    draw_pixel(((j*8+i)%80)*4+x,((j*8+i)/80)*4+y,color);
     
 
   }
 
   }
-
-  changeColor(0x70);
+/*
+  changeColor(0x00);
   gotoxy(0,23);
   printf("  %c:Cluster vacio ",219);
   
-  changeColor(0x71);
+  changeColor(0x00);
   printf("%c",219);
   changeColor(0x70);
   printf(":Cluster archivo ");
@@ -272,7 +280,7 @@ void clusters(){
   changeColor(0x7f);
   printf("%c",219);
   changeColor(0x70);
-  printf(":Cluster datos                  ");
+  printf(":Cluster datos                  ");*/
 }
 
 
@@ -413,6 +421,7 @@ inf(argv[1]);
 
   else if(argc==1 && strcmp(argv[0],"games")==0){
     initGameHub();
+    init_term(mboot);
   }
   else
   {
@@ -430,6 +439,7 @@ inf(argv[1]);
   {
     line[i] = 0;
   }
+  changeColor(0x0f);
 }
 
 void loop_term()
@@ -438,8 +448,8 @@ void loop_term()
   character = inport(0x60);
   ch = s;
   s = getKeyboardKey(character);
-
-  if (s == 132 && ch != 132 && actualLine>0){
+  if(s == ch)return;
+  if (s == 132 && actualLine>0){
     resetLine();
     printf("                                     ");
     resetLine();
@@ -449,7 +459,7 @@ void loop_term()
     strcpy(line,linesHistory[selectedLine],80);
   }
 
-  if (s == 130 && ch != 130 && selectedLine!=actualLine){
+  if (s == 130 && selectedLine!=actualLine){
     resetLine();
     selectedLine++;
     printf(">");
@@ -457,7 +467,7 @@ void loop_term()
     strcpy(line,linesHistory[selectedLine],80);
   }
 
-  if (s == 128 && ch != 128)
+  if (s == 128)
   {
     
     
@@ -480,7 +490,7 @@ strcpy(linesHistory[actualLine],line,80);
     detectCommands();
     
   }
-  if (s == 129 && ch != 129 && xCursor > 1 && !boolOnTest)
+  if (s == 129 && xCursor > 1 && !boolOnTest)
   {
 
     backspace();
@@ -490,7 +500,7 @@ strcpy(linesHistory[actualLine],line,80);
     xCursor--;
     update_cursor(xCursor, yCursor);
   }
-  if (s != ch && s != 0 && s < 128 && !boolOnTest)
+  if (s != 0 && s < 128 && !boolOnTest)
   {
     printf("%c", (char)s);
     line[indexLetter] = s;
@@ -498,10 +508,11 @@ strcpy(linesHistory[actualLine],line,80);
     xCursor++;
     update_cursor(xCursor, yCursor);
   }
+  refresh();
 }
 
 void new_line_term()
 {
-  printf("/n>n");
+  printf("/n>");
   indexLetter = 0;
 }

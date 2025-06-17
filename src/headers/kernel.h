@@ -9,6 +9,7 @@
 #include "gdt.h"
 #include "term.h"
 #include "diskDriver.h"
+#include "vga.h"
 /*
 typedef struct{
     uint32 flags;            // Flags indicating which fields are valid

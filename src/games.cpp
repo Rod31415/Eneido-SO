@@ -1,7 +1,7 @@
 #include "headers/games.h"
 
 #define width 80
-#define height 80
+#define height 25
 
 
 void fillRect(uint32 x,uint32 y,uint32 w,uint32 h,char c){
@@ -34,7 +34,7 @@ for(uint32 i=0;i<=h;i++){
 ///// SNAKE ////// 
 
 uint32 xArray[100],yArray[100];
-uint32 arrayIndex=20;
+uint32 arrayIndex=3;
 uint32 xFood=10,yFood=10;
 
 void passCoords(uint8 dir){
@@ -61,27 +61,36 @@ if(xArray[0]==xFood&&yArray[0]==yFood){
 
 
 void printFood(){
-  gotoxy(xFood,yFood);
-  printf("o");
+  for(uint8 x=0;x<4;x++){
+    for(uint8 y=0;y<4;y++){
+      draw_pixel(xFood*4+x,yFood*4+y,0x1f);
+    }
+   }
+
 }
 
 void printCoords(){
-  for(uint32 i=0;i<arrayIndex+1;i++){
-
-    gotoxy(xArray[i],yArray[i]);
-    printf("#");
-  }
+ for(uint32 i=0;i<arrayIndex+1;i++){
+   for(uint8 x=0;x<4;x++){
+    for(uint8 y=0;y<4;y++){
+      draw_pixel(xArray[i]*4+x,yArray[i]*4+y,0x1f);
+    }
+   }
+}
 }
 
 void removeCoords(){
  for(uint32 i=0;i<arrayIndex+1;i++){
-   gotoxy(xArray[i],yArray[i]);
-    printf(" ");
-  }
+   for(uint8 x=0;x<4;x++){
+    for(uint8 y=0;y<4;y++){
+      draw_pixel(xArray[i]*4+x,yArray[i]*4+y,0);
+    }
+   }
+}
 }
 
 void snakeINIT(){
-  cls(0x1f);
+  cls(0x00);
   changeColor(0x1f);
 uint8 ch0,ch1,ch2;
 uint8 dir=3;
@@ -97,7 +106,7 @@ printCoords();
 
 
 while(1){
-for(uint32 i=0;i<10;i++){sleep();}
+for(uint32 i=0;i<20;i++){sleep();}
   ch1=ch0;
   ch2=inport(0x60);
   ch0=getKeyboardKey(ch2);
@@ -116,7 +125,7 @@ printCoords();
 refresh();
 
 }
-
+cls(0x00);
 }
 
 
@@ -129,9 +138,6 @@ void patoINIT(){
 
 
 void wolfensteinINIT(){
-initVGA();
-
-
 
 
 }
@@ -159,43 +165,40 @@ void gameSelected(){
   if(l==escKeyCode)break;
   if(l==enterKeyCode){function[menuSelectedGame]();break;}
 
-changeColor(0x7f);
-gotoxy(12,5+menuSelectedGame*2);
+changeColor(0x03);
+gotoxy(width/2-10,7+menuSelectedGame*2);
 printf(menuGameNames[menuSelectedGame]);
 
   if(l==upKeyCode&&menuSelectedGame>0){menuSelectedGame--;}
   else if(l==downKeyCode&&menuSelectedGame<menuMaxGames-1){menuSelectedGame++;}
 
-changeColor(0x8f);
-gotoxy(12,5+menuSelectedGame*2);
+changeColor(0x02);
+gotoxy(width/2-10,7+menuSelectedGame*2);
 printf(menuGameNames[menuSelectedGame]);
+refresh();
   }
 
 }
 
 void initGameHub(){
-cls(0x9f);
-changeColor(0x9f);
-gotoxy(width/2-4,1);
+cls(0x38);
+changeColor(0x1b);
+gotoxy(width/2-10,3);
 printf("Game-Hub");
+draw_rect(40,40,240,120,0x07);
+draw_rect(48,48,224,104,0x3f);
 
-changeColor(0x77);
-  fillRect(10,3,60,19,(int8)219);
-changeColor(0xFF);
-strokeRect(10,3,60,19,'#');
-
-changeColor(0x7f);
+changeColor(0x03);
 
 for(uint32 i=0;i<menuMaxGames;i++){
-  gotoxy(12,5+i*2);
+  gotoxy(width/2-10,7+i*2);
   printf(menuGameNames[i]);
 }
 
 
+refresh();
 
 gameSelected();
-changeColor(0x0f);
-cls(0x0f);
 }
 
 

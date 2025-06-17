@@ -25,4 +25,29 @@ typedef struct multiboot_info{
     uint16 vbe_interface_len; // VBE interface length 
 }__attribute__((packed))multiboot_info_t;
 
+
+struct vbe_mode_info_struct{
+  uint16 attributes;
+  uint8 window_a, window_b;
+  uint16 granularity;
+  uint16 window_size;
+  uint16 segment_a, segment_b;
+  uint32 win_func_ptr;
+  uint16 pitch;
+  uint16 width, height;
+  uint8 w_char,y_char, planes, bpp, banks;
+  uint8 memory_model, bank_size, image_pages;
+  uint8 reserved0;
+
+  uint8 red_mask,red_position;
+  uint8 green_mask,green_position;
+  uint8 blue_mask,blue_position;
+  uint8 reserved_mask,reserved_position;
+  uint8 direct_color_attributes;
+
+  uint32 framebuffer;
+  uint32 off_screen_mem_off;
+  uint16 off_screen_mem_size;
+}__attribute__((packed));
+
 #endif 

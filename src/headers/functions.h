@@ -2,7 +2,7 @@
 #define FUNCTIONS_H
 #include "types.h"
 #include "utilities.h"
-
+#include "vga.h"
 
 
 void sleep();

@@ -27,6 +27,7 @@ return (status&1);
 DIR localFile; 
 void initEditor(DIR file)
 {
+
 col=0;
 row=0;
 
@@ -36,7 +37,7 @@ row=0;
     }
   }
   localFile=file;
-	cls(0x0f);
+	cls(0x00);
 uint8 buff[localFile.size*512];
 readCluster(buff,localFile.firstcluster*8+localFile.directions);
 uint32 subu=0,upu=0;
@@ -45,23 +46,22 @@ uint32 subu=0,upu=0;
   lineStr[upu][subu]=(int8)buff[u];
   if(subu==width-1){upu++;}
 }
+changeColor(0x0f);
 for(uint32 i=0;i<height;i++){
-
 gotoxy(0,i);
 printf(lineStr[i]);
 }
 update_cursor(0,0);
-
-changeColor(0x77);
-gotoxy(0,24);
-for(uint32 i=0;i<width;i++){
-  printf(" ");
-}
-  changeColor(0x70);
+draw_rect(0,23*8+4,320,12,0x0f);
+change_ground_color(0);
+changeColor(0x00);
 gotoxy(0,24);
 printf(localFile.name);
-gotoxy(32,24);
+gotoxy(30,24);
 printf("EDITOR by Rodrigo");
+change_ground_color(1);
+refresh();
+gotoxy(0,0);
 changeColor(0x0f);
 loopEditor();
 
@@ -71,11 +71,11 @@ void loopEditor()
 {
 	while (1)
 	{
-    if(kbhit){
 		charac = inport(0x60);
 	  prevLetter=letter;
 		letter = getKeyboardKey(charac);
-    if (letter == esc&&prevLetter!=esc){
+    if(letter==prevLetter){continue;}
+    if (letter == esc){
 
 uint8 buff[localFile.size*512];
 uint32 subu=0,upu=0;
@@ -89,43 +89,40 @@ writeCluster(buff,localFile.firstcluster*8+localFile.directions);
       break;
     }
     uint32 lgtStr=lenghtStr(lineStr[row]);
-		     if(letter == left  && prevLetter != left  && col>0       ){col--; update_cursor(col, row);}
-    else if(letter == right && prevLetter != right && col<lgtStr  ){col++; update_cursor(col, row);}
-    else if(letter == down  && prevLetter != down  && row<height  ){row++;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; update_cursor(col, row);}
-    else if(letter == up    && prevLetter != up    && row>0       ){row--;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; update_cursor(col, row);}
-    else if(letter == enter && prevLetter != enter && row<height  ){row++;col=0; update_cursor(col,row);}
-    else if(letter == del   && prevLetter != del   && col > 0     ){
+		     if(letter == left  && col>0       ){col--; update_cursor(col, row);}
+    else if(letter == right && col<lgtStr  ){col++; update_cursor(col, row);}
+    else if(letter == down  && row<height  ){row++;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; update_cursor(col, row);}
+    else if(letter == up    && row>0       ){row--;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; update_cursor(col, row);}
+    else if(letter == enter && row<height  ){row++;col=0; update_cursor(col,row);}
+    else if(letter == del   && col > 0     ){
       eraseStr(lineStr[row],col-1,1);
       col--;
 			update_cursor(col, row);
 
-      uint8 buffer[81];
-      memset((uint32)buffer,32,80);
-      buffer[81]=0;
+      uint8 buffer[41];
+      memset((uint32)buffer,32,40);
+      buffer[41]=0;
       gotoxy(0,row);
       printf((int8 *)buffer);
       gotoxy(0,row);
       printf(lineStr[row]);
-
     }
-    else if(letter != prevLetter && letter != 0 && letter<128)
+    else if(letter != 0 && letter<128)
 		{
 
       insertStr(lineStr[row],col,(char)letter);
       col++; 
 			update_cursor(col, row);
      
-      uint8 buffer[81];
-      memset((uint32)buffer,32,80);
-      buffer[81]=0;
+      uint8 buffer[41];
+      memset((uint32)buffer,32,40);
+      buffer[41]=0;
       gotoxy(0,row);
       printf((int8 *)buffer);
       gotoxy(0,row);
       printf(lineStr[row]);
-
     }
-	}
-
+  refresh();
   }
 }
 
