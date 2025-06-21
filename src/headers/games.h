@@ -4,5 +4,6 @@
 #include "functions.h"
 #include "utilities.h"
 #include "vga.h"
+#include "math.h"
 void initGameHub();
 #endif

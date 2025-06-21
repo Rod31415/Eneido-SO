@@ -3,6 +3,8 @@
 #define width 80
 #define height 25
 
+#define widthPx 320
+#define heightPx 200
 
 void fillRect(uint32 x,uint32 y,uint32 w,uint32 h,char c){
 for(uint32 i=0;i<h;i++){
@@ -90,6 +92,7 @@ void removeCoords(){
 }
 
 void snakeINIT(){
+  change_ground_color(1);
   cls(0x00);
   changeColor(0x1f);
 uint8 ch0,ch1,ch2;
@@ -135,12 +138,37 @@ void patoINIT(){
 
 
 }
+/////////////////////////////////////////////////////////////
+float xPl=2,yPl=2;
+float anglePl=0;
 
+uint8 map[10][10]={
+  {1,1,1,1,1,1,1,1,1,1},
+  {1,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,1,0,0,1},
+  {1,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,1},
+  {1,1,1,1,1,1,1,1,1,1},
+};
+
+float raycast(float angle);
 
 void wolfensteinINIT(){
-
+  cls(0x00);
+for(float line=0;line<320;line++){
+  float dis=raycast(anglePl+line/320.0);
+  draw_line(line,heightPx/2-dis,line,heightPx/2+dis,0x0f);
+}
 
 }
+float raycast(float angle){
+
+}
+
 
 ////////////////////   HUB   ////////////////////////
 
@@ -177,11 +205,12 @@ gotoxy(width/2-10,7+menuSelectedGame*2);
 printf(menuGameNames[menuSelectedGame]);
 refresh();
   }
-
+change_ground_color(1);
 }
 
 void initGameHub(){
 cls(0x38);
+  change_ground_color(0);
 changeColor(0x1b);
 gotoxy(width/2-10,3);
 printf("Game-Hub");

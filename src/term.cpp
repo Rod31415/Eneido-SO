@@ -131,7 +131,6 @@ void help()
   changeColor(0x07);
   printf("  Solo tenemos los siguientes comandos: /n /n");
   changeColor(0x0E);
-printf("  Solo tenemos los siguientes comandos: /n /n");
   printf("   echo <mensaje>             - Muestra un mensaje en la pantalla /n");
   printf("   init                       - Reinicia la terminal /n");
   printf("   help                       - Abre esta ventana /n");

@@ -51,7 +51,7 @@ for(uint32 i=0;i<height;i++){
 gotoxy(0,i);
 printf(lineStr[i]);
 }
-update_cursor(0,0);
+//update_cursor(0,0);
 draw_rect(0,23*8+4,320,12,0x0f);
 change_ground_color(0);
 changeColor(0x00);
@@ -89,15 +89,15 @@ writeCluster(buff,localFile.firstcluster*8+localFile.directions);
       break;
     }
     uint32 lgtStr=lenghtStr(lineStr[row]);
-		     if(letter == left  && col>0       ){col--; update_cursor(col, row);}
-    else if(letter == right && col<lgtStr  ){col++; update_cursor(col, row);}
-    else if(letter == down  && row<height  ){row++;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; update_cursor(col, row);}
-    else if(letter == up    && row>0       ){row--;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; update_cursor(col, row);}
-    else if(letter == enter && row<height  ){row++;col=0; update_cursor(col,row);}
+		     if(letter == left  && col>0       ){col--;/* update_cursor(col, row);*/}
+    else if(letter == right && col<lgtStr  ){col++; /*update_cursor(col, row);*/}
+    else if(letter == down  && row<height  ){row++;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col;/* update_cursor(col, row);*/}
+    else if(letter == up    && row>0       ){row--;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col;/* update_cursor(col, row);*/}
+    else if(letter == enter && row<height  ){row++;col=0; /*update_cursor(col,row);*/}
     else if(letter == del   && col > 0     ){
       eraseStr(lineStr[row],col-1,1);
       col--;
-			update_cursor(col, row);
+		//	update_cursor(col, row);
 
       uint8 buffer[41];
       memset((uint32)buffer,32,40);
@@ -112,7 +112,7 @@ writeCluster(buff,localFile.firstcluster*8+localFile.directions);
 
       insertStr(lineStr[row],col,(char)letter);
       col++; 
-			update_cursor(col, row);
+			//update_cursor(col, row);
      
       uint8 buffer[41];
       memset((uint32)buffer,32,40);

@@ -13,6 +13,7 @@ void backspace()
 	{
 		globalColumn--;
     draw_char(globalColumn*4,globalRow*8,' ',actualColor);
+      draw_char(globalColumn*4+4,globalRow*8,' ',actualColor);
 	}
 }
 void scrollDown()
@@ -27,6 +28,7 @@ void sleep()
 		__asm__ __volatile__("nop");
 	}
 }
+
 
 void nextPosition()
 {
@@ -177,6 +179,8 @@ void printf(const char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int
 		}
 		else if (str[i] == '/' && str[i + 1] == 'n')
 		{
+      draw_char(globalColumn*4,globalRow*8,' ',actualColor);
+      draw_char(globalColumn*4+4,globalRow*8,' ',actualColor);
 			globalColumn = 0;
 			globalRow++;
 			if (globalRow >= maxRows)
@@ -184,7 +188,6 @@ void printf(const char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int
 				globalRow=24;
 				scrollDown();
 			}
-
 			i += 2;
 			continue;
 		}
@@ -204,12 +207,8 @@ void cls(uint8 color)
 
 void update_cursor(uint32 x, uint32 y)
 {
-	uint16 pos = y * colsPerRow + x;
+	draw_char(x*4,y*8,255,actualColor);
 
-	outport(0x3D4, 0x0F);
-	outport(0x3D5, (uint8)(pos & 0xFF));
-	outport(0x3D4, 0x0E);
-	outport(0x3D5, (uint8)((pos >> 8) & 0xFF));
 }
 
 void putChar(int32 x, int32 y, char character, uint8 color)

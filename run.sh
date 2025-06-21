@@ -15,7 +15,7 @@ i386-elf-g++ -ffreestanding -m32 -c -g "src/term.cpp" -o "bin/term.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "src/string.cpp" -o "bin/string.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "src/gdt.cpp" -o "bin/gdt.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "src/vfs.cpp" -o "bin/vfs.o"
-i386-elf-g++ -ffreestanding -m32 -c -g "src/diskDriver.cpp" -o "bin/diskDriver.o"
+i386-elf-g++ -ffreestanding -m32 -c -g "src/disk.cpp" -o "bin/diskDriver.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "src/editor.cpp" -o "bin/editor.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "src/games.cpp" -o "bin/games.o"
 i386-elf-g++ -ffreestanding -m32 -c -g "src/vga.cpp" -o "bin/vga.o"
@@ -36,7 +36,7 @@ rm bin/string.o
 rm bin/gdt.o
 rm bin/realEntry.o
 rm bin/vfs.o
-rm bin/diskDriver.o
+rm bin/disk.o
 rm bin/editor.o
 rm bin/games.o
 rm bin/vga.o

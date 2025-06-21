@@ -10,10 +10,14 @@ extern "C" void _main(multiboot_info *mboot)
  uint8 res=inport(0x3c1);
  outport(0x3c0,res&0xF7);
 
+
+
+
+
 initVGA();
 clear_screen(0);
-
-
+  changeColor(0x0f);
+initDisk();
   init_term(mboot);
 
 
