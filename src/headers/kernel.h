@@ -7,6 +7,7 @@
 #include "multiboot.h"
 #include "vfs.h"
 #include "gdt.h"
+#include "idt.h"
 #include "term.h"
 #include "diskDriver.h"
 #include "vga.h"

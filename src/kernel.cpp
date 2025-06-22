@@ -3,7 +3,8 @@
 extern "C" void _main(multiboot_info *mboot)
 {
 	gdt_install();
-	initVFS();
+	idt_install();
+  initVFS();
   createFile("Leeme.txt");
  inport(0x3da);
  outport(0x3c0,0x30);
@@ -17,6 +18,7 @@ extern "C" void _main(multiboot_info *mboot)
 initVGA();
 clear_screen(0);
   changeColor(0x0f);
+
 initDisk();
   init_term(mboot);
 
