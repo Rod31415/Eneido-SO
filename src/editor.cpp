@@ -55,10 +55,13 @@ printf(lineStr[i]);
 draw_rect(0,23*8+4,320,12,0x0f);
 change_ground_color(0);
 changeColor(0x00);
-gotoxy(0,24);
+gotoxy(1,24);
+printf("FILE:");
 printf(localFile.name);
 gotoxy(30,24);
 printf("EDITOR by Rodrigo");
+gotoxy(62,24);
+printf("ESC for save");
 change_ground_color(1);
 refresh();
 gotoxy(0,0);
@@ -67,8 +70,20 @@ loopEditor();
 
 }
 uint8 charac, letter=enter,prevLetter=enter;
+
+void printLine(){
+uint8 buffer[41];
+      memset((uint32)buffer,32,40);
+      buffer[41]=0;
+      gotoxy(0,row);
+      printf((int8 *)buffer);
+      gotoxy(0,row);
+      printf(lineStr[row]);
+}
+
 void loopEditor()
 {
+			update_cursor(col, row);
 	while (1)
 	{
 		charac = inport(0x60);
@@ -89,38 +104,23 @@ writeCluster(buff,localFile.firstcluster*8+localFile.directions);
       break;
     }
     uint32 lgtStr=lenghtStr(lineStr[row]);
-		     if(letter == left  && col>0       ){col--;/* update_cursor(col, row);*/}
-    else if(letter == right && col<lgtStr  ){col++; /*update_cursor(col, row);*/}
-    else if(letter == down  && row<height  ){row++;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col;/* update_cursor(col, row);*/}
-    else if(letter == up    && row>0       ){row--;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col;/* update_cursor(col, row);*/}
-    else if(letter == enter && row<height  ){row++;col=0; /*update_cursor(col,row);*/}
+		     if(letter == left  && col>0       ){col--;printLine();update_cursor(col, row);}
+    else if(letter == right && col<lgtStr  ){col++;printLine();update_cursor(col, row);}
+    else if(letter == down  && row<height  ){printLine();row++;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; printLine();update_cursor(col, row);}
+    else if(letter == up    && row>0       ){printLine();row--;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; printLine();update_cursor(col, row);}
+    else if(letter == enter && row<height  ){printLine();row++;col=0; printLine();update_cursor(col,row);}
     else if(letter == del   && col > 0     ){
       eraseStr(lineStr[row],col-1,1);
       col--;
-		//	update_cursor(col, row);
-
-      uint8 buffer[41];
-      memset((uint32)buffer,32,40);
-      buffer[41]=0;
-      gotoxy(0,row);
-      printf((int8 *)buffer);
-      gotoxy(0,row);
-      printf(lineStr[row]);
-    }
+      printLine();
+			update_cursor(col, row);
+          }
     else if(letter != 0 && letter<128)
 		{
-
       insertStr(lineStr[row],col,(char)letter);
       col++; 
-			//update_cursor(col, row);
-     
-      uint8 buffer[41];
-      memset((uint32)buffer,32,40);
-      buffer[41]=0;
-      gotoxy(0,row);
-      printf((int8 *)buffer);
-      gotoxy(0,row);
-      printf(lineStr[row]);
+      printLine();
+			update_cursor(col, row);
     }
   refresh();
   }

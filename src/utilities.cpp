@@ -185,7 +185,7 @@ uint8 getKeyboardKey(uint8 input)
 	case 53:
 		return (shiftOn) ? '_' : '-';
 		break;
-	case 14:
+	case 14://TAB
 		return 129;
 		break;
 	case 28:

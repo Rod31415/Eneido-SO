@@ -39,6 +39,18 @@ uint32 xArray[100],yArray[100];
 uint32 arrayIndex=3;
 uint32 xFood=10,yFood=10;
 
+uint8 GameOver=0;
+
+void comprobeCoords(){
+   if(xArray[0]<=3||xArray[0]>=76||yArray[0]<=3||yArray[0]>=46)GameOver=1;
+}
+
+void newFoodCoord(){
+  srand(time());
+  xFood=rand()%60+10;
+  yFood=rand()%20+10;
+}
+
 void passCoords(uint8 dir){
 
   for(uint32 i=arrayIndex;i>0;i--){
@@ -56,45 +68,46 @@ switch (dir) {
 
 if(xArray[0]==xFood&&yArray[0]==yFood){
   arrayIndex++;
-  
+  newFoodCoord();
+  draw_rect(120,0,160,12,0x2f);
+  gotoxy(30,0);
+  printf("Puntos %d",arrayIndex*10-30);
 }
 
 }
 
 
 void printFood(){
-  for(uint8 x=0;x<4;x++){
-    for(uint8 y=0;y<4;y++){
-      draw_pixel(xFood*4+x,yFood*4+y,0x1f);
-    }
-   }
+  draw_rect(xFood*4,yFood*4,4,4,0x04);
 
 }
 
 void printCoords(){
  for(uint32 i=0;i<arrayIndex+1;i++){
-   for(uint8 x=0;x<4;x++){
-    for(uint8 y=0;y<4;y++){
-      draw_pixel(xArray[i]*4+x,yArray[i]*4+y,0x1f);
-    }
-   }
+draw_rect(xArray[i]*4,yArray[i]*4,4,4,0x01);
 }
 }
 
 void removeCoords(){
  for(uint32 i=0;i<arrayIndex+1;i++){
-   for(uint8 x=0;x<4;x++){
-    for(uint8 y=0;y<4;y++){
-      draw_pixel(xArray[i]*4+x,yArray[i]*4+y,0);
-    }
-   }
+draw_rect(xArray[i]*4,yArray[i]*4,4,4,0x02);
 }
 }
 
 void snakeINIT(){
-  change_ground_color(1);
+  arrayIndex=3;
+  GameOver=0;
+xFood=10;
+yFood=10;
   cls(0x00);
-  changeColor(0x1f);
+  draw_rect(0,0,320,200,0x2f);
+  draw_rect(12,12,296,176,0x02);
+
+  changeColor(0x0);
+  change_ground_color(0);
+  gotoxy(30,0);
+  printf("Puntos %d",arrayIndex*10-30);
+
 uint8 ch0,ch1,ch2;
 uint8 dir=3;
 xArray[0]=20;
@@ -109,26 +122,36 @@ printCoords();
 
 
 while(1){
-for(uint32 i=0;i<20;i++){sleep();}
+for(uint32 i=0;i<(uint32)(1.0/(float)arrayIndex*80);i++){sleep();}
   ch1=ch0;
   ch2=inport(0x60);
   ch0=getKeyboardKey(ch2);
 removeCoords();
 
 if(ch0 != ch1){
-if(ch0 == escKeyCode)break;
+if(ch0 == escKeyCode){cls(0x00);break;}
 if(ch0 ==  downKeyCode && dir != 2){dir=0;}
 else if(ch0 ==  leftKeyCode && dir != 3){dir=1;}
 else if(ch0 ==    upKeyCode && dir != 0){dir=2;}
 else if(ch0 == rightKeyCode && dir != 1){dir=3;}
 }
+if(!GameOver){
 passCoords(dir);
+comprobeCoords();
 printFood();
 printCoords();
-refresh();
+draw_rect(0,0,4,4,0x2f);
+}
+else {
+draw_rect(30*4-16,10*8-16,9*4+32,40,0x2f);
+gotoxy(30,10);
+printf("GAME OVER");
 
 }
-cls(0x00);
+refresh();
+}
+
+  change_ground_color(1);
 }
 
 

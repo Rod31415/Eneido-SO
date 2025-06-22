@@ -1,3 +1,4 @@
+#include "headers/math.h"
 #define PI 3.1415926535897932384626433238795028
 #define PI_2 3.1415926535897932384626433238795028/2.0
 uint8 sineLookTable[]={
@@ -38,6 +39,17 @@ uint8 sineLookTable[]={
 0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,
 0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe
 };
+
+static unsigned long int actualSeed=0;
+
+void srand(uint32 seed){
+  actualSeed=seed;
+}
+
+uint32 rand(){
+  actualSeed=actualSeed*1103515245+12345;
+  return (uint32)(actualSeed/65536)%32768;
+}
 
 float sin(float angle){
   angle=angle/PI*180;
@@ -82,11 +94,5 @@ float cos(float angle){
 
 
 float sqrt(float base){
-  float r=base;
-  float t=0.0;
-  while(t!=r){
-    t=r;
-    r=(x/r+r)/2.0;
-  }
-  return result;
+return 1;
 }

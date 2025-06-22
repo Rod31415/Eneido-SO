@@ -17,6 +17,7 @@ void changeColor(uint8 color);
 void gotoxy(int32 x,int32 y);
 void printf(const char* str, int32 arg0=0, int32 arg1=0, int32 arg2=0, int32 arg3=0, int32 arg4=0);
 void resetTTYScreen();
+void getConsoleCursorPosition(uint32 *x,uint32 *y);
 void putChar(int32 x, int32 y, char character,uint8 color);
 void nextLine();
 void resetLine();

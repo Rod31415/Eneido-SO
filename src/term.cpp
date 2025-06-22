@@ -63,8 +63,9 @@ void init_term(multiboot_info *mb)
   gotoxy(0, 17);
   changeColor(0x0f);
   printf(">");
-  xCursor = 1;
+xCursor = 1;
   yCursor = 17;
+  getConsoleCursorPosition(&xCursor,&yCursor);
   update_cursor(xCursor, yCursor);
 refresh();    
 }
@@ -145,7 +146,8 @@ void help()
   printf("   edit <archivo> <contenido> - Edita un archivo /n");
   printf("   edit <archivo>             - Abre el archivo con el editor de texto/n");
   printf("   clusters                   - Abre la ventana del sistema de archivos /n");
-  printf("   games                      - Abre la ventana de juegos /n");
+  printf("   date                       - Muestra la fecha y hora actual/n");
+  changeColor(0x0f);
   new_line_term();
 }
 
@@ -300,21 +302,11 @@ void detectCommands()
   else if (strcmp(argv[0], "echo") == 0)
   {
     echo();
-    xCursor = 1;
-    if (yCursor < 24)
-      yCursor++;
-    update_cursor(xCursor, yCursor);
   }
 
   else if (argc == 1 && strcmp(argv[0], "help") == 0)
   {
     help();
-    xCursor = 1;
-    for (int i = 0; i < 18; i++)
-      if (yCursor < 24)
-        yCursor++;
-
-    update_cursor(xCursor, yCursor);
   }
 
   else if (argc == 1 && strcmp(argv[0], "colors") == 0)
@@ -325,20 +317,11 @@ void detectCommands()
   else if (argc == 1 && strcmp(argv[0], "license") == 0)
   {
     license();
-    xCursor = 1;
 
-    for (int i = 0; i < 7; i++)
-      if (yCursor < 24)
-        yCursor++;
-
-    update_cursor(xCursor, yCursor);
   }
   else if (argc == 1 && strcmp(argv[0], "clear") == 0)
   {
     clear();
-    xCursor = 1;
-    yCursor = 0;
-    update_cursor(xCursor, yCursor);
   }
 
   else if (argc == 1 && strcmp(argv[0], "ls") == 0)
@@ -346,13 +329,6 @@ void detectCommands()
     backspace();
     int h = readFiles();
     changeColor(0x0f);
-    xCursor = 1;
-
-    for (int i = 0; i < h; i++)
-      if (yCursor < 24)
-        yCursor++;
-    update_cursor(xCursor, yCursor);
-
     new_line_term();
   }
 
@@ -363,9 +339,6 @@ void detectCommands()
     {
       backspace();
       printf(" Carpeta no encontrada ");
-      if (yCursor < 24)
-        yCursor++;
-      update_cursor(xCursor, yCursor);
       new_line_term();
     }
   }
@@ -375,38 +348,25 @@ void detectCommands()
 
     createDirectory(argv[1]);
 
-    update_cursor(xCursor, yCursor);
   }
 
   else if (argc == 2 && strcmp(argv[0], "cat") == 0){
 cat(argv[1]);
-
- if (yCursor < 24)
-        yCursor++;
-      update_cursor(xCursor, yCursor);
       new_line_term();
 
   }
   else if(argc==2&&strcmp(argv[0],"inf")==0){
 inf(argv[1]);
-    for (int i = 0; i < 5; i++)
- if (yCursor < 24)
-        yCursor++;
-      update_cursor(xCursor, yCursor);
       new_line_term();
-
   }
  else if (argc == 2 && strcmp(argv[0], "touch") == 0)
   {
 
     createFile(argv[1]);
-
-    update_cursor(xCursor, yCursor);
   }
 
   else if(argc==3 && strcmp(argv[0],"edit")==0){
     edit(argv[1],argv[2]);
-    update_cursor(xCursor,yCursor);
 
   }
   else if(argc==2 && strcmp(argv[0],"edit")==0){
@@ -422,24 +382,29 @@ inf(argv[1]);
     initGameHub();
     init_term(mboot);
   }
+  else if(argc==1 && strcmp(argv[0],"date")==0){
+    backspace();
+    printRTC();
+    new_line_term();
+  }
   else
   {
     backspace();
     printf("Uhh me mataste, no tengo el comando ");
     printf((argv[0]));
     new_line_term();
-    xCursor = 1;
-    if (yCursor < 24)
-      yCursor++;
-    update_cursor(xCursor, yCursor);
   }
 
   for (uint8 i = 0; i < 100; i++)
   {
     line[i] = 0;
   }
+
+  getConsoleCursorPosition(&xCursor,&yCursor);
+    update_cursor(xCursor, yCursor);
   changeColor(0x0f);
 }
+
 
 void loop_term()
 {
@@ -448,6 +413,9 @@ void loop_term()
   ch = s;
   s = getKeyboardKey(character);
   if(s == ch)return;
+  if (s == 136){
+    
+  }
   if (s == 132 && actualLine>0){
     resetLine();
     printf("                                     ");
@@ -476,9 +444,7 @@ void loop_term()
       init_term(mboot);
     }
     new_line_term();
-    xCursor = 1;
-    if (yCursor < 24)
-      yCursor++;
+  getConsoleCursorPosition(&xCursor,&yCursor);
     update_cursor(xCursor, yCursor);
     formatCommand();
     if (argv[0][0] != 0){
@@ -496,7 +462,7 @@ strcpy(linesHistory[actualLine],line,80);
     
     indexLetter--;
     line[indexLetter] = 0;
-    xCursor--;
+  getConsoleCursorPosition(&xCursor,&yCursor);
     update_cursor(xCursor, yCursor);
   }
   if (s != 0 && s < 128 && !boolOnTest)
@@ -504,7 +470,7 @@ strcpy(linesHistory[actualLine],line,80);
     printf("%c", (char)s);
     line[indexLetter] = s;
     indexLetter++;
-    xCursor++;
+  getConsoleCursorPosition(&xCursor,&yCursor);
     update_cursor(xCursor, yCursor);
   }
   refresh();

@@ -180,7 +180,6 @@ void printf(const char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int
 		else if (str[i] == '/' && str[i + 1] == 'n')
 		{
       draw_char(globalColumn*4,globalRow*8,' ',actualColor);
-      draw_char(globalColumn*4+4,globalRow*8,' ',actualColor);
 			globalColumn = 0;
 			globalRow++;
 			if (globalRow >= maxRows)
@@ -197,6 +196,12 @@ void printf(const char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int
 	}
 }
 
+void getConsoleCursorPosition(uint32 *x,uint32 *y){
+*x=globalColumn;
+*y=globalRow;
+
+}
+
 void cls(uint8 color)
 {
   clear_screen(actualColor);
@@ -207,7 +212,9 @@ void cls(uint8 color)
 
 void update_cursor(uint32 x, uint32 y)
 {
-	draw_char(x*4,y*8,255,actualColor);
+  change_ground_color(0);
+	draw_char(x*4,y*8,'_',actualColor);
+  change_ground_color(1);
 
 }
 

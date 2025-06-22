@@ -9,6 +9,7 @@
 #include "diskDriver.h"
 #include "editor.h"
 #include "games.h"
+#include "rtc.h"
 
 void init_term(multiboot_info *mboot);
 void new_line_term();
