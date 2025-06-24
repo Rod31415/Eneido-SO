@@ -11,10 +11,10 @@ uint32 col=0,row=0;
 #define del 129
 #define enter 128
 
-#define height 24
+#define height 29
 #define width 80
 
-char lineStr[height][width];
+char lineStr[1000][width];
 
 bool kbhit(){
 
@@ -39,7 +39,9 @@ row=0;
   localFile=file;
 	cls(0x00);
 uint8 buff[localFile.size*512];
-readCluster(buff,localFile.firstcluster*8+localFile.directions);
+for(uint32 i=0;i<localFile.size;i++){
+readCluster(&buff[i*512],localFile.firstcluster*8+localFile.directions+i);
+}
 uint32 subu=0,upu=0;
   for(uint32 u=0;u<localFile.size*512;u++){
     subu=u%width;
@@ -52,15 +54,15 @@ gotoxy(0,i);
 printf(lineStr[i]);
 }
 //update_cursor(0,0);
-draw_rect(0,23*8+4,320,12,0x0f);
+draw_rect(0,(height-1)*16+8,width*8,24,0x0f);
 change_ground_color(0);
 changeColor(0x00);
-gotoxy(1,24);
+gotoxy(1,29);
 printf("FILE:");
 printf(localFile.name);
-gotoxy(30,24);
+gotoxy(30,29);
 printf("EDITOR by Rodrigo");
-gotoxy(62,24);
+gotoxy(62,29);
 printf("ESC for save");
 change_ground_color(1);
 refresh();
@@ -81,6 +83,15 @@ uint8 buffer[41];
       printf(lineStr[row]);
 }
 
+void checkSize(){
+  uint32 size=0;
+for(uint32 h=0;h<1000;h++){
+if(lineStr[h][0]==0){size=h*80;break;}
+}
+localFile.size=(uint32)(size/512)+1;
+modifyFile(localFile.name,localFile);
+}
+
 void loopEditor()
 {
 			update_cursor(col, row);
@@ -92,6 +103,7 @@ void loopEditor()
     if(letter==prevLetter){continue;}
     if (letter == esc){
 
+checkSize();
 uint8 buff[localFile.size*512];
 uint32 subu=0,upu=0;
   for(uint32 u=0;u<localFile.size*512;u++){
@@ -99,7 +111,8 @@ uint32 subu=0,upu=0;
   buff[u]=(uint8)lineStr[upu][subu];
   if(subu==79){upu++;}
 }
-writeCluster(buff,localFile.firstcluster*8+localFile.directions);
+for(uint32 i=0;i<localFile.size;i++)
+writeCluster(&buff[i*512],localFile.firstcluster*8+localFile.directions+i);
 
       break;
     }

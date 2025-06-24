@@ -1,10 +1,10 @@
 #include "headers/games.h"
 
 #define width 80
-#define height 25
+#define height 30
 
-#define widthPx 320
-#define heightPx 200
+#define widthPx 640
+#define heightPx 480
 
 void fillRect(uint32 x,uint32 y,uint32 w,uint32 h,char c){
 for(uint32 i=0;i<h;i++){
@@ -42,13 +42,22 @@ uint32 xFood=10,yFood=10;
 uint8 GameOver=0;
 
 void comprobeCoords(){
-   if(xArray[0]<=3||xArray[0]>=76||yArray[0]<=3||yArray[0]>=46)GameOver=1;
+   if(xArray[0]<=1||xArray[0]>=38||yArray[0]<=1||yArray[0]>=28)GameOver=1;
+if(arrayIndex>3){
+for(uint32 i=0;i<arrayIndex;i++){
+  for(uint32 j=0;j<arrayIndex;j++){
+    if(i==j)continue;
+    if(xArray[i]==xArray[j]&&yArray[i]==yArray[j]){GameOver=1;break;}
+    }
+  if(GameOver)break;
+  }}
 }
 
 void newFoodCoord(){
+  draw_rect(xFood*16,yFood*16,16,16,0x02);
   srand(time());
-  xFood=rand()%60+10;
-  yFood=rand()%20+10;
+  xFood=rand()%34+3;
+  yFood=rand()%24+3;
 }
 
 void passCoords(uint8 dir){
@@ -69,8 +78,8 @@ switch (dir) {
 if(xArray[0]==xFood&&yArray[0]==yFood){
   arrayIndex++;
   newFoodCoord();
-  draw_rect(120,0,160,12,0x2f);
-  gotoxy(30,0);
+  draw_rect(0,0,widthPx,32,0x2f);
+  gotoxy(width/2-4,0);
   printf("Puntos %d",arrayIndex*10-30);
 }
 
@@ -78,34 +87,37 @@ if(xArray[0]==xFood&&yArray[0]==yFood){
 
 
 void printFood(){
-  draw_rect(xFood*4,yFood*4,4,4,0x04);
+  draw_rect(xFood*16,yFood*16,16,16,0x04);
 
 }
 
 void printCoords(){
  for(uint32 i=0;i<arrayIndex+1;i++){
-draw_rect(xArray[i]*4,yArray[i]*4,4,4,0x01);
+draw_rect(xArray[i]*16,yArray[i]*16,16,16,0x01);
 }
 }
 
 void removeCoords(){
  for(uint32 i=0;i<arrayIndex+1;i++){
-draw_rect(xArray[i]*4,yArray[i]*4,4,4,0x02);
+draw_rect(xArray[i]*16,yArray[i]*16,16,16,0x02);
 }
 }
 
+uint32 timeSnake=0;
+uint32 maxTimeSnake=0;
 void snakeINIT(){
+  timeSnake=0;
   arrayIndex=3;
   GameOver=0;
 xFood=10;
 yFood=10;
   cls(0x00);
-  draw_rect(0,0,320,200,0x2f);
-  draw_rect(12,12,296,176,0x02);
+  draw_rect(0,0,widthPx,heightPx,0x2f);
+  draw_rect(32,32,widthPx-64,heightPx-64,0x02);
 
   changeColor(0x0);
   change_ground_color(0);
-  gotoxy(30,0);
+  gotoxy(width/2-4,0);
   printf("Puntos %d",arrayIndex*10-30);
 
 uint8 ch0,ch1,ch2;
@@ -120,9 +132,9 @@ yArray[2]=10;
 
 printCoords();
 
-
+maxTimeSnake=(arrayIndex<20)?40-arrayIndex:20;
 while(1){
-for(uint32 i=0;i<(uint32)(1.0/(float)arrayIndex*80);i++){sleep();}
+  timeSnake++;
   ch1=ch0;
   ch2=inport(0x60);
   ch0=getKeyboardKey(ch2);
@@ -136,17 +148,21 @@ else if(ch0 ==    upKeyCode && dir != 0){dir=2;}
 else if(ch0 == rightKeyCode && dir != 1){dir=3;}
 }
 if(!GameOver){
+  if(timeSnake==maxTimeSnake){
+  
+  timeSnake=0;
 passCoords(dir);
 comprobeCoords();
+maxTimeSnake=(arrayIndex<20)?40-arrayIndex:20;
+  }
 printFood();
 printCoords();
-draw_rect(0,0,4,4,0x2f);
+draw_rect(0,0,16,16,0x2f);
 }
-else {
-draw_rect(30*4-16,10*8-16,9*4+32,40,0x2f);
-gotoxy(30,10);
+else if(GameOver){
+draw_rect(widthPx/2-100-4*8,height/2*16-66,9*8+200,16+100,0x2f);
+gotoxy(width/2-4,height/2-1);
 printf("GAME OVER");
-
 }
 refresh();
 }
@@ -235,10 +251,10 @@ void initGameHub(){
 cls(0x38);
   change_ground_color(0);
 changeColor(0x1b);
-gotoxy(width/2-10,3);
+gotoxy(width/2-4,3);
 printf("Game-Hub");
-draw_rect(40,40,240,120,0x07);
-draw_rect(48,48,224,104,0x3f);
+draw_rect(40,40,widthPx-80,heightPx-80,0x07);
+draw_rect(48,48,widthPx-96,heightPx-96,0x3f);
 
 changeColor(0x03);
 

@@ -34,6 +34,7 @@ int readFiles();
 DIR searchFile(char *name);
 int changeDirectory(char *name);
 int createDirectory(char *name);
+int modifyFile(char *name,DIR File);
 int createFile(char *name);
 
 #endif

@@ -46,7 +46,7 @@ int8 line[80];
 uint8 indexLetter = 0;
 multiboot_info *mboot;
 uint32 argc;
-int8 argv[10][40];
+int8 argv[10][80];
 uint8 first=0;
 
 void init_term(multiboot_info *mb)
@@ -159,12 +159,7 @@ void colors()
   gotoxy(0, 0);
   for (uint32 i = 0; i < 256; i++)
   {
-
-    for(uint32 x=0;x<20;x++){
-    for(uint32 y=0;y<12;y++){
-      draw_pixel((i%16)*20+x,(i/16)*12+y,i);
-    }
-  }
+      draw_rect((i%16)*40,(i/16)*30,40,30,i);
 }
 }
 
@@ -251,10 +246,7 @@ void clusters(){
       case 3 :color=4;break;
       case 10:color=0xf;break;
     }
-    for(uint8 x=0;x<4;x++)
-    for(uint8 y=0;y<4;y++)
-    draw_pixel(((j*8+i)%80)*4+x,((j*8+i)/80)*4+y,color);
-    
+    draw_rect(((j*8+i)%40)*16,((j*8+i)/40)*16,16,16,color); 
 
   }
 

@@ -3,7 +3,7 @@
 #include "utilities.h"
 #define VGA ((uint8 *)0xA0000);
 
-void initVGA();
+void initVGA(uint8 *fb);
 void initTextMode();
 void draw_pixel(uint32 x,uint32 y,uint8 color);
 void draw_line(int32 x0,int32 y0,int32 x1,int32 y1,uint8 color);

@@ -2,6 +2,7 @@
 
 extern "C" void _main(multiboot_info *mboot)
 {
+
 	gdt_install();
 	idt_install();
   initVFS();
@@ -14,8 +15,12 @@ extern "C" void _main(multiboot_info *mboot)
 
 
 
+vbe_mode_info_struct* vbe=(vbe_mode_info_struct*)(uint32)mboot->vbe_mode_info;
 
-initVGA();
+uint8 *fb=(uint8 *)(uint32)vbe->framebuffer;
+
+
+initVGA(fb);
 clear_screen(0);
   changeColor(0x0f);
 

@@ -132,12 +132,34 @@ int createDirectory(char name[49])
   actualClusterDIR = aux1;
   actualDirectoryDIR = aux2;
 }
+//int createDirectory
+//
+int modifyFile(char name[49],DIR File){
+ uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
+  DIR actualDir = {};
+  do
+  {
+    readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
+
+if (strcmp(actualDir.name, name) == 0)
+    {
+      writeDirectory(File,actualClusterDIR,actualDirectoryDIR);
+    }
+    actualClusterDIR = actualDir.nextCluster;
+    actualDirectoryDIR = actualDir.nextDirection;
+
+      } while (actualClusterDIR != 0);
+  actualClusterDIR=aux1;
+  actualDirectoryDIR=aux2;
+
+
+}
 
 int createFile(char name[49])
 {
   uint32 cl = retClusterFree(1);
   uint32 cs = retClusterFree(64);
-  DIR folder = {"", 1, 1, (uint32)(cs / 8), cs % 8, 0, 0};
+  DIR folder = {"", 1, 10, (uint32)(cs / 8), cs % 8, 0, 0};
   strcpy(folder.name, name);
   writeDirectory(folder, (uint32)(cl / 8), cl % 8);
   DIR data = {".",10,1,0,0,0,0};
