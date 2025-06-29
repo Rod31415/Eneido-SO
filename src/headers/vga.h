@@ -1,9 +1,13 @@
 #ifndef VGA_H
 #define VGA_H
 #include "utilities.h"
+
+
+#define widthWindow 640
+#define heightWindow 480
 #define VGA ((uint8 *)0xA0000);
 
-void initVGA(uint8 *fb);
+void initVGA(uint8 *fb,uint32 width,uint32 height);
 void initTextMode();
 void draw_pixel(uint32 x,uint32 y,uint8 color);
 void draw_line(int32 x0,int32 y0,int32 x1,int32 y1,uint8 color);

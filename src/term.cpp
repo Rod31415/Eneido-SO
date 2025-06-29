@@ -6,29 +6,28 @@ uint16 actualLine=0;
 int8 linesHistory[200][80];
 uint32 flags, memLow, memHigh, sect;
 
+int8 EneidoTitleString[8][80]={
+  "                               ,,        ,,                                  ",
+  "                               db      `7MM                                  ",
+  "                                         MM                                  ",
+  "   .gP'Ya `7MMpMMMb.  .gP'Ya `7MM   ,M''bMM  ,pW'Wq.        ,pP'Ybd  ,pW'Wq. ",
+  "  ,M'   Yb  MM    MM ,M'   Yb  MM ,AP    MM 6W'   `Wb       8I   `' 6W'   `Wb",
+  "  8M''''''  MM    MM 8M''''''  MM 8MI    MM 8M     M8 mmmmm `YMMMa. 8M     M8",
+  "  YM.    ,  MM    MM YM.    ,  MM `Mb    MM YA.   ,A9       L.   I8 YA.   ,A9",
+  "   `Mbmmd'.JMML  JMML.`Mbmmd'.JMML.`Wbmd'MML.`Ybmd9'        M9mmmP'  `Ybmd9' ",
+};
+
 void drawOpenSource()
 {
+
+ 
   gotoxy(0,0);
   changeColor(0x02);
-  printf("          #####/n");
-  printf("      #############/n");
-  printf("    #################/n");
-  printf("  #####################/n");
-  printf("  #########   #########/n");
-  printf("#########       #########/n");
-  printf("#########       #########/n");
-  printf("#########       #########/n");
-  printf("  ########     ########/n");
-  printf("  ########     ########/n");
-  printf("    #####       #####/n");
-  printf("      ###       ###");
-
-  gotoxy(41, 1);
-  printf("ENEIDO SO ");
-  gotoxy(41, 2);
-  printf(" 32 bits ");
-  gotoxy(34, 4);
-
+ for(uint8 i=0;i<8;i++){
+    printf(EneidoTitleString[i]);
+    printf("/n");
+  }
+gotoxy(25,9);
   changeColor(0x0E);
   printf("   Por Rodrigo Bustos ");
   changeColor(0x02);
@@ -147,6 +146,8 @@ void help()
   printf("   edit <archivo>             - Abre el archivo con el editor de texto/n");
   printf("   clusters                   - Abre la ventana del sistema de archivos /n");
   printf("   date                       - Muestra la fecha y hora actual/n");
+  printf("   pci                        - Muestra los dispositivos PCI/n");
+  printf("   doen                       - Ejecuta el interprete de DOEN/n");
   changeColor(0x0f);
   new_line_term();
 }
@@ -157,9 +158,10 @@ void colors()
 
   cls(0x00);
   gotoxy(0, 0);
+  uint32 block=widthWindow/16;
   for (uint32 i = 0; i < 256; i++)
   {
-      draw_rect((i%16)*40,(i/16)*30,40,30,i);
+      draw_rect((i%16)*block,(i/16)*block,block,block,i);
 }
 }
 
@@ -186,7 +188,7 @@ backspace();
 DIR file=searchFile(name);
 if(file.name[0]==0){return;}
 uint8 buffer[512];
-readCluster(buffer,file.firstcluster*8+file.directions);
+file.read(buffer);
 char buff[80];
 for(int i=0;i<80;i++){
 buff[i]=(int8)buffer[i];
@@ -206,8 +208,8 @@ printf(file.name);
 printf("/nBanderas: %d = ",file.flags);
 printf((file.flags==1)?"Archivo":((file.flags==2)?"Directorio":"Retorno"));
 printf("/nTamanio: %d clusters",file.size);
-printf("/nPrimer Cluster: %d ",file.firstcluster);
-printf("/nPrimer Direccion: %d ",file.directions);
+printf("/nPrimer Cluster: %d ",file.dataCluster);
+printf("/nPrimer Direccion: %d ",file.dataDirection);
 }
 
 void edit(char *name,char *str){
@@ -218,7 +220,7 @@ for (int i = 0; i < 80; i++)
     (str[i] == '"') ? str[i] = ' ' : 0;
   }
 uint8* buffer=(uint8 *)str;
-writeCluster(buffer,file.firstcluster*8+file.directions);
+writeCluster(buffer,file.dataCluster*8+file.dataDirection);
 }
 
 void editor(char *name){
@@ -227,14 +229,13 @@ if(file.name[0]==0){return;}
 initEditor(file);
 }
 
-
 void clusters(){
 
  boolOnTest = 1;
 
-  cls(0x00);
   uint8 color=0;
   DIR file;
+  cls(0x00);
   for(uint32 j=0;j<4000;j++){
   for (uint32 i = 0; i < 8; i++)
   {
@@ -246,7 +247,7 @@ void clusters(){
       case 3 :color=4;break;
       case 10:color=0xf;break;
     }
-    draw_rect(((j*8+i)%40)*16,((j*8+i)/40)*16,16,16,color); 
+    draw_rect(((j*8+i)%(widthWindow/16))*16,((j*8+i)/(widthWindow/16))*16,16,16,color); 
 
   }
 
@@ -379,6 +380,23 @@ inf(argv[1]);
     printRTC();
     new_line_term();
   }
+  else if(argc==1 && strcmp(argv[0],"pci")==0){
+    backspace();
+    PCIShowDevices();
+    new_line_term();
+  }
+  
+  else if(argc==2 && strcmp(argv[0],"doen")==0){
+    backspace();
+    DIR file=searchFile(argv[1]);
+    if(file.name[0]==0){
+      initInterpreterByArgv(argv[1]);
+    }
+    else{
+    initInterpreterByFile(file);}
+    new_line_term();
+  }
+
   else
   {
     backspace();

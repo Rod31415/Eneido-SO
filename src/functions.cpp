@@ -2,11 +2,12 @@
 #include "headers/key_codes.h"
 #include "headers/types.h"
 #include "headers/kernel.h"
-#define colsPerRow 80
-#define maxRows 30
 
 #define FontWidth 8
 #define FontHeight 16
+
+#define colsPerRow widthWindow/FontWidth
+#define maxRows heightWindow/FontHeight
 
 int32 globalColumn = 0, globalRow = 0;
 char actualColor = 0;
@@ -181,7 +182,7 @@ void printf(const char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int
 				continue;
 			}
 		}
-		else if (str[i] == '/' && str[i + 1] == 'n')
+		else if (str[i] == '/' && str[i + 1] == 'n'||str[i]==13)
 		{
       draw_char(globalColumn*FontWidth,globalRow*FontHeight,' ',actualColor);
 			globalColumn = 0;

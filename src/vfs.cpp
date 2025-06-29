@@ -25,8 +25,8 @@ void writeDirectory(DIR buffer, uint32 cluster, uint32 directory)
     *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + i) = buffer.name[i];
   *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 49) = buffer.flags;
   *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 50) = buffer.size;
-  *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 54) = buffer.firstcluster;
-  *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 58) = buffer.directions;
+  *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 54) = buffer.dataCluster;
+  *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 58) = buffer.dataDirection;
   *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 59) = buffer.nextCluster;
   *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 63) = buffer.nextDirection;
 }
@@ -41,8 +41,8 @@ void readDirectory(DIR *buffer, uint32 cluster, uint32 directory)
     buffer->name[i] = *(int8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + i);
   buffer->flags = *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 49);
   buffer->size = *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 50);
-  buffer->firstcluster = *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 54);
-  buffer->directions = *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 58);
+  buffer->dataCluster = *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 54);
+  buffer->dataDirection = *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 58);
   buffer->nextCluster = *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 59);
   buffer->nextDirection = *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 63);
 }
@@ -60,8 +60,8 @@ void initVFS()
   root.name[0] = '.';
   root.flags = 2;
   root.size = 0;
-  root.firstcluster = 1;
-  root.directions = 0;
+  root.dataCluster = 1;
+  root.dataDirection = 0;
   root.nextCluster = 0;
   root.nextDirection = 0;
   writeDirectory(root, 0, 0);
@@ -75,7 +75,7 @@ DIR file = {"Juegos", 2, 1, 20, 0, 0, 0};
   file = {"snake.exe", 1, 1, 65, 0, 0, 0};
   writeDirectory(file, 20, 1);
 
-  actualClusterDIR = root.firstcluster;
+  actualClusterDIR = root.dataCluster;
   actualDirectoryDIR = 0;
 }
 
@@ -293,8 +293,8 @@ int changeDirectory(char *name)
     if (strcmp(actualDir.name, name, 0) == 0 && actualDir.flags > 1)
     {
       a = a | 1;
-      actualClusterDIR = actualDir.firstcluster;
-      actualDirectoryDIR = actualDir.directions;
+      actualClusterDIR = actualDir.dataCluster;
+      actualDirectoryDIR = actualDir.dataDirection;
       break;
     }
     else
@@ -309,3 +309,6 @@ int changeDirectory(char *name)
   }
   return a;
 }
+
+
+

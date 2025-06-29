@@ -34,11 +34,20 @@ for(uint32 i=0;i<=h;i++){
 
 
 ///// SNAKE ////// 
+int8 SnakeTitle[7][80]={
+" .M'''bgd                     `7MM              ",
+",MI    'Y                       MM              ",
+"`MMb.    `7MMpMMMb.   ,6'Yb.    MM  ,MP'.gP'Ya  ",
+"  `YMMNq.  MM    MM  8)   MM    MM ;Y  ,M'   Yb ",
+".     `MM  MM    MM   ,pm9MM    MM;Mm  8M'''''' ",
+"Mb     dM  MM    MM  8M   MM    MM `Mb.YM.    , ",
+"P'Ybmmd' .JMML  JMML.`Moo9^Yo..JMML. YA.`Mbmmd' ",
+};
 
 uint32 xArray[100],yArray[100];
 uint32 arrayIndex=3;
 uint32 xFood=10,yFood=10;
-
+uint8 dir=3;
 uint8 GameOver=0;
 
 void comprobeCoords(){
@@ -60,13 +69,17 @@ void newFoodCoord(){
   yFood=rand()%24+3;
 }
 
-void passCoords(uint8 dir){
+void passCoords(uint8 nextDir){
+if(nextDir==0&&xArray[0]!=xArray[1]){dir=0;}
+else if(nextDir==1&&yArray[0]!=yArray[1]){dir=1;}
+else if(nextDir==2&&xArray[0]!=xArray[1]){dir=2;}
+else if(nextDir==3&&yArray[0]!=yArray[1]){dir=3;}
+
 
   for(uint32 i=arrayIndex;i>0;i--){
     xArray[i]=xArray[i-1];
     yArray[i]=yArray[i-1];
   }
-
 switch (dir) {
   case 0:yArray[0]=yArray[0]+1;break;
   case 1:xArray[0]=xArray[0]-1;break;
@@ -105,6 +118,9 @@ draw_rect(xArray[i]*16,yArray[i]*16,16,16,0x02);
 
 uint32 timeSnake=0;
 uint32 maxTimeSnake=0;
+
+
+
 void snakeINIT(){
   timeSnake=0;
   arrayIndex=3;
@@ -112,6 +128,21 @@ void snakeINIT(){
 xFood=10;
 yFood=10;
   cls(0x00);
+
+gotoxy(0,0);
+changeColor(0x0f);
+for(uint8 i=0;i<7;i++){
+  gotoxy(13,9+i);
+printf(SnakeTitle[i]);
+printf("/n");
+}
+gotoxy(21,20);
+printf("Presione ESPACIO para continuar");
+
+refresh();
+
+while(getKeyboardKey(inport(0x60))!=32);
+
   draw_rect(0,0,widthPx,heightPx,0x2f);
   draw_rect(32,32,widthPx-64,heightPx-64,0x02);
 
@@ -121,7 +152,8 @@ yFood=10;
   printf("Puntos %d",arrayIndex*10-30);
 
 uint8 ch0,ch1,ch2;
-uint8 dir=3;
+uint8 nextDir=3;
+
 xArray[0]=20;
 yArray[0]=10;
 xArray[1]=21;
@@ -132,7 +164,8 @@ yArray[2]=10;
 
 printCoords();
 
-maxTimeSnake=(arrayIndex<20)?40-arrayIndex:20;
+maxTimeSnake=(arrayIndex<20)?20-arrayIndex:0;
+uint8 first=1;
 while(1){
   timeSnake++;
   ch1=ch0;
@@ -142,27 +175,28 @@ removeCoords();
 
 if(ch0 != ch1){
 if(ch0 == escKeyCode){cls(0x00);break;}
-if(ch0 ==  downKeyCode && dir != 2){dir=0;}
-else if(ch0 ==  leftKeyCode && dir != 3){dir=1;}
-else if(ch0 ==    upKeyCode && dir != 0){dir=2;}
-else if(ch0 == rightKeyCode && dir != 1){dir=3;}
+if(ch0 ==  downKeyCode && dir != 2){nextDir=0;}
+else if(ch0 ==  leftKeyCode && dir != 3){nextDir=1;}
+else if(ch0 ==    upKeyCode && dir != 0){nextDir=2;}
+else if(ch0 == rightKeyCode && dir != 1){nextDir=3;}
 }
 if(!GameOver){
   if(timeSnake==maxTimeSnake){
   
   timeSnake=0;
-passCoords(dir);
+passCoords(nextDir);
 comprobeCoords();
-maxTimeSnake=(arrayIndex<20)?40-arrayIndex:20;
+maxTimeSnake=(arrayIndex<20)?20-arrayIndex:00;
   }
 printFood();
 printCoords();
 draw_rect(0,0,16,16,0x2f);
 }
-else if(GameOver){
+else if(GameOver&&first){
 draw_rect(widthPx/2-100-4*8,height/2*16-66,9*8+200,16+100,0x2f);
 gotoxy(width/2-4,height/2-1);
 printf("GAME OVER");
+first=0;
 }
 refresh();
 }

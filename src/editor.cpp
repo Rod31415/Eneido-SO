@@ -3,6 +3,11 @@
 
 uint32 col=0,row=0;
 
+
+uint32 maxRowsInFile=0;
+#define colOffSet 2
+#define rowOffSet 0
+
 #define down 130
 #define left 131
 #define up 132
@@ -40,19 +45,34 @@ row=0;
 	cls(0x00);
 uint8 buff[localFile.size*512];
 for(uint32 i=0;i<localFile.size;i++){
-readCluster(&buff[i*512],localFile.firstcluster*8+localFile.directions+i);
+readCluster(&buff[i*512],localFile.dataCluster*8+localFile.dataDirection+i);
 }
-uint32 subu=0,upu=0;
-  for(uint32 u=0;u<localFile.size*512;u++){
-    subu=u%width;
-  lineStr[upu][subu]=(int8)buff[u];
-  if(subu==width-1){upu++;}
+uint32 rowIndex=0,colIndex=0;
+maxRowsInFile=*(buff);
+  for(uint32 u=4;u<localFile.size*512;u++){
+    
+  if(buff[u]==13){lineStr[rowIndex][colIndex]=1;colIndex=0;rowIndex++;u++;}
+  lineStr[rowIndex][colIndex]=(int8)buff[u];
+  colIndex++;
 }
 changeColor(0x0f);
 for(uint32 i=0;i<height;i++){
-gotoxy(0,i);
+gotoxy(colOffSet,i);
 printf(lineStr[i]);
+
 }
+
+
+draw_rect(0,0,16,height*16,0x1c);
+changeColor(0x00);
+      change_ground_color(0);
+      for(uint32 i=0;i<=maxRowsInFile;i++){
+      draw_rect(0,i*16,16,16,0x01c);
+      gotoxy((i<10)?1:0,i);
+      printf("%d",i);}
+    changeColor(0x0f);
+    change_ground_color(1);
+
 //update_cursor(0,0);
 draw_rect(0,(height-1)*16+8,width*8,24,0x0f);
 change_ground_color(0);
@@ -60,13 +80,13 @@ changeColor(0x00);
 gotoxy(1,29);
 printf("FILE:");
 printf(localFile.name);
-gotoxy(30,29);
-printf("EDITOR by Rodrigo");
+gotoxy(36,29);
+printf("EDITOR");
 gotoxy(62,29);
 printf("ESC for save");
 change_ground_color(1);
 refresh();
-gotoxy(0,0);
+gotoxy(2,0);
 changeColor(0x0f);
 loopEditor();
 
@@ -74,12 +94,21 @@ loopEditor();
 uint8 charac, letter=enter,prevLetter=enter;
 
 void printLine(){
+
 uint8 buffer[41];
       memset((uint32)buffer,32,40);
       buffer[41]=0;
-      gotoxy(0,row);
+      gotoxy(colOffSet,row);
       printf((int8 *)buffer);
-      gotoxy(0,row);
+
+      changeColor(0x00);
+      change_ground_color(0);
+      draw_rect(0,row*16,16,16,0x01c);
+      gotoxy((row<10)?1:0,row);
+      printf("%d",row);
+    changeColor(0x0f);
+    change_ground_color(1);
+      gotoxy(colOffSet,row);
       printf(lineStr[row]);
 }
 
@@ -92,9 +121,14 @@ localFile.size=(uint32)(size/512)+1;
 modifyFile(localFile.name,localFile);
 }
 
+void refreshMaxFileRows(){
+  if(row>maxRowsInFile)
+    maxRowsInFile=row;
+}
+
 void loopEditor()
 {
-			update_cursor(col, row);
+			update_cursor(col+colOffSet, row);
 	while (1)
 	{
 		charac = inport(0x60);
@@ -105,35 +139,38 @@ void loopEditor()
 
 checkSize();
 uint8 buff[localFile.size*512];
-uint32 subu=0,upu=0;
-  for(uint32 u=0;u<localFile.size*512;u++){
-    subu=u%80;
-  buff[u]=(uint8)lineStr[upu][subu];
-  if(subu==79){upu++;}
-}
+uint32 rowIndex=0,colIndex=0;
+*(buff)=maxRowsInFile;
+  for(uint32 u=4;u<localFile.size*512;u++){
+    
+  if(lineStr[rowIndex][colIndex]==0){rowIndex++;colIndex=0;
+  buff[u]=13;u++;}
+  buff[u]=(uint8)lineStr[rowIndex][colIndex];
+  colIndex++;
+  }
 for(uint32 i=0;i<localFile.size;i++)
-writeCluster(&buff[i*512],localFile.firstcluster*8+localFile.directions+i);
+writeCluster(&buff[i*512],localFile.dataCluster*8+localFile.dataDirection+i);
 
       break;
     }
     uint32 lgtStr=lenghtStr(lineStr[row]);
-		     if(letter == left  && col>0       ){col--;printLine();update_cursor(col, row);}
-    else if(letter == right && col<lgtStr  ){col++;printLine();update_cursor(col, row);}
-    else if(letter == down  && row<height  ){printLine();row++;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; printLine();update_cursor(col, row);}
-    else if(letter == up    && row>0       ){printLine();row--;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; printLine();update_cursor(col, row);}
-    else if(letter == enter && row<height  ){printLine();row++;col=0; printLine();update_cursor(col,row);}
+		     if(letter == left  && col>0       ){col--;printLine();update_cursor(col+colOffSet, row);}
+    else if(letter == right && col<lgtStr  ){col++;printLine();update_cursor(col+colOffSet, row);}
+    else if(letter == down  && row<height  ){printLine();row++;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; printLine();update_cursor(col+colOffSet, row);refreshMaxFileRows();}
+    else if(letter == up    && row>0       ){printLine();row--;col=(col > lenghtStr(lineStr[row]) )?lenghtStr(lineStr[row]):col; printLine();update_cursor(col+colOffSet, row);}
+    else if(letter == enter && row<height  ){printLine();row++;col=0; printLine();update_cursor(col+colOffSet,row);refreshMaxFileRows();}
     else if(letter == del   && col > 0     ){
       eraseStr(lineStr[row],col-1,1);
       col--;
       printLine();
-			update_cursor(col, row);
+			update_cursor(col+colOffSet, row);
           }
     else if(letter != 0 && letter<128)
 		{
       insertStr(lineStr[row],col,(char)letter);
       col++; 
       printLine();
-			update_cursor(col, row);
+			update_cursor(col+colOffSet, row);
     }
   refresh();
   }

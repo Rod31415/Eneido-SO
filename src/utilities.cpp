@@ -32,10 +32,20 @@ uint16 inportw(uint16 port)
 	__asm__ __volatile__("inw %1, %0" : "=a"(rv) : "dN"(port));
 	return rv;
 }
+uint32 inportl(uint16 port)
+{
+	uint32 rv;
+	__asm__ __volatile__("inl %1, %0" : "=a"(rv) : "dN"(port));
+	return rv;
+}
 
 void outport(uint16 port, uint8 data)
 {
 	__asm__ __volatile__("outb %1, %0" : : "dN"(port), "a"(data));
+}
+void outportl(uint16 port, uint32 data)
+{
+	__asm__ __volatile__("outl %1, %0" : : "dN"(port), "a"(data));
 }
 
 void bflush()

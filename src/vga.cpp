@@ -403,8 +403,8 @@ uint32 HEIGHT = 0;
 
 void refresh();
 
-uint8 backbuffer[640*480];
-uint8 changed[640*480];
+uint8 backbuffer[widthWindow*heightWindow];
+uint8 changed[widthWindow*heightWindow];
 volatile uint8* VGA_address=(volatile uint8 *)0xA0000;
 
 uint8 CHANGE_GROUND_COLOR=1;
@@ -426,7 +426,6 @@ for(uint32 i=0;i<WIDTH*dist;i++){
   backbuffer[i+WIDTH*HEIGHT-WIDTH*dist]=0x00;
   changed[i+WIDTH*HEIGHT-WIDTH*dist]=1;
 }
-refresh();
 }
 
 void scrollUP(uint32 dist){
@@ -478,8 +477,6 @@ if(mode==12){
         set_plane(plane);
         //uint8 fill = (color & (1 << plane)) ? 0xFF : 0x00;
         for(uint32 i = 0; i < 38400; ++i) {
-            backbuffer[i]= color;
-            changed[i]=1;
         }
     }
   }
@@ -602,49 +599,13 @@ void refresh(){
       }
     }
 }
-void initVGA(uint8 *fb){
+void initVGA(uint8 *fb,uint32 width,uint32 height){
   VGA_address=(volatile uint8 *)fb;
 
- /* write_registers(mode13h);
-  uint32 r=0,g=0,b=0;
-  uint32 bright=0;
-  for(uint32 i = 0; i < 256; i++) {
-    if(i<16){
-      bright=(i&0x08)?0xAA:00;
-      r=(i&0x04)?0x7f:0x00;
-      g=(i&0x02)?0x7f:0x00;
-      b=(i&0x01)?0x7f:0x00;
-      if(bright){
-        if(r)r+=0x7f;
-        if(g)g+=0x7f;
-        if(b)b+=0x7f;
-      }
-    }
-    else if(i<232){
-   r=((i/36)%6)*255/5;
-   g=((i/6)%6)*255/5;
-   b=(i%6)*255/5;}
-    else {
-     r=(uint32)((float)(i-232)*255/23);
-     g=r;
-     b=g;
-   }
-
-        outport(0x3C8, i);
-        outport(0x3C9, r);  // R
-        outport(0x3C9, g);  // G
-        outport(0x3C9, b);  // B
-
-
-
-
-    }
-   */
-    // Limpiar pantalla
-    
-    mode = 13;
-    WIDTH=640;
-    HEIGHT=480;
+  
+     mode = 13;
+    WIDTH=width;
+    HEIGHT=height;
     clear_screen(2);
 }
 

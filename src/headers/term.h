@@ -10,6 +10,8 @@
 #include "editor.h"
 #include "games.h"
 #include "rtc.h"
+#include "pci.h"
+#include "interpreter.h"
 
 void init_term(multiboot_info *mboot);
 void new_line_term();

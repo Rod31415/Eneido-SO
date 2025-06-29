@@ -7,6 +7,14 @@ extern "C" void _main(multiboot_info *mboot)
 	idt_install();
   initVFS();
   createFile("Leeme.txt");
+  uint8 buf[512]=" =(12 + fooBar) * 4";
+  for(uint32 i=0;i<512;i++){
+    if(buf[i]=='/'){
+      buf[i]=13;
+    }
+  }
+  *(buf)=(uint32)4;
+  writeCluster(buf,64*8);
  inport(0x3da);
  outport(0x3c0,0x30);
  uint8 res=inport(0x3c1);
@@ -18,9 +26,11 @@ extern "C" void _main(multiboot_info *mboot)
 vbe_mode_info_struct* vbe=(vbe_mode_info_struct*)(uint32)mboot->vbe_mode_info;
 
 uint8 *fb=(uint8 *)(uint32)vbe->framebuffer;
+uint32 width=(uint32)vbe->width;
+uint32 height=(uint32)vbe->height;
 
 
-initVGA(fb);
+initVGA(fb,width,height);
 clear_screen(0);
   changeColor(0x0f);
 
