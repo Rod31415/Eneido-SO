@@ -139,12 +139,19 @@ void loopEditor()
 
 checkSize();
 uint8 buff[localFile.size*512];
+memset((uint32)buff,0,localFile.size*512);
 uint32 rowIndex=0,colIndex=0;
 *(buff)=maxRowsInFile;
   for(uint32 u=4;u<localFile.size*512;u++){
     
-  if(lineStr[rowIndex][colIndex]==0){rowIndex++;colIndex=0;
+  if(lineStr[rowIndex][colIndex]==0){
+    if(rowIndex==maxRowsInFile){
+    break;
+    }
+    else{
+  rowIndex++;colIndex=0;
   buff[u]=13;u++;}
+  }
   buff[u]=(uint8)lineStr[rowIndex][colIndex];
   colIndex++;
   }

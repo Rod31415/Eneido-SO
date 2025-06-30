@@ -75,6 +75,27 @@ uint8 getKeyboardKey(uint8 input)
 
 	switch (input)
 	{
+  case 27:
+    return (shiftOn) ? '*' : '+';
+    break;
+  case 26:
+    return (shiftOn) ? 126 : 94;
+    break;
+  case 40:
+    return (shiftOn) ? '[' : '{';
+    break;
+  case 43:
+    return (shiftOn) ? ']' : '}';
+    break;
+  case 12:
+    return (shiftOn) ? '?' : 39;
+    break;
+  case 13:
+    return (shiftOn) ? '¡' : '¿';
+    break;
+  case 41:
+    return (shiftOn) ? '°' : '|';
+    break;
 	case 30:
 		return (shiftOn) ? 'A' : 'a';
 		break;

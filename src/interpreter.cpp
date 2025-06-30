@@ -1,23 +1,28 @@
 #include "headers/interpreter.h"
 
-#define MaxReservedWords 1
-#define MaxTokensTypes 12
+#define MaxReservedWords 2
+#define MaxTokensTypes 21
 
 int8 TokenWords[MaxTokensTypes][32]={
-  "VAR",
+  "VAR","PRINT",
   "OPENPAREN", "CLOSEPAREN", "DOT", "PLUS", "MINUS",
   "STAR", "SLASH",
 
   "EQUAL",
 
-  "IDENTIFIER", "NUMBER",
+  "EQUAL_EQUAL", "NOT_EQUAL", "GREATER", "LESS",
+  "GREATER_EQUAL", "LESS_EQUAL",
+
+  "COMMA",
+
+  "IDENTIFIER", "NUMBER", "STRING",
 
   "EOF"
 };
 
 enum TokenType{
    
-  VAR=0,
+  VAR=0,PRINT,
   OPENPAREN, CLOSEPAREN, DOT, PLUS, MINUS,
   STAR, SLASH,
 
@@ -26,7 +31,9 @@ enum TokenType{
   EQUAL_EQUAL, NOT_EQUAL, GREATER, LESS,
   GREATER_EQUAL, LESS_EQUAL,
 
-  IDENTIFIER, NUMBER,
+  COMMA,
+
+  IDENTIFIER, NUMBER, STRING,
 
   EOF
 };
@@ -42,12 +49,87 @@ buffer++;
 }
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////ENVIRONMENT///////////////////////////////////////
+
+
+#define MAX_IDENTIFIERS   512
+#define MAX_NUMBERS       512
+#define MAX_STRINGS       512
+#define MAX_BINARYEXPRS   512
+#define MAX_VARASSIGNMENT 512
+#define MAX_FUNCTIONSTATEMENT 512
+
+
+class Environment{
+private:
+  Environment *parent;
+  uint32 varIndex=0;
+  uint32 variables[MAX_IDENTIFIERS];
+  int8 symbols[MAX_IDENTIFIERS][32];
+  public:
+  Environment(){
+  }
+
+  void init(){
+    this->varIndex=0;
+   memset((uint32)this->variables,0,MAX_IDENTIFIERS*sizeof(uint32));
+  memset((uint32)this->symbols,0,MAX_IDENTIFIERS*32);
+  }
+
+  int32 has(int8* varname){
+    for(uint32 i=0;i<this->varIndex;i++){
+      if(strcmp(varname,this->symbols[i])==0)return i+1;
+    }
+    return 0;
+  }
+
+  uint32 declareVar(int8* varname, uint32 value){
+    uint32 s=this->has(varname);
+    if(s!=0){printf("VARIABLE YA DECLARADA: '");printf(varname);printf("'/n");}
+    this->variables[this->varIndex]=value;
+    strcpy(this->symbols[this->varIndex],varname);
+    this->varIndex++;
+        return value;
+  }
+  uint32 lookupVar(int8* varname){
+    uint32 s=this->has(varname);
+    if(s==0){printf("VARIABLE NO DECLARADA: '");printf(varname);printf("'/n");return 0;}
+    uint32 value=this->variables[s-1];
+    return value;
+  }
+
+  uint32 assignVar(int8* varname,uint32 value){
+    int32 s=this->has(varname);
+    if(s==0){printf("VARIABLE NO DECLARADA: '");printf(varname);printf("'/n");return 0;}
+
+    this->variables[s-1]=value;
+  
+    return value;
+  }
+  Environment resolve(int8* varname){
+
+  }
+
+
+};
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////PARSER//////////////////////////////////////////
+
 enum NodeType{
   NodeProgram,
   NodeNumericLiteral,
+  NodeStringLiteral,
   NodeIdentifier,
-  NodeBinaryExpr
+  NodeBinaryExpr,
+  NodeVarAssignment,
+  NodeFunctionStatement
+  
 };
 
 class Statement{
@@ -72,6 +154,14 @@ class BinaryExpr: public Expr {
   TokenType op;
 };
 
+class VarAssignment: public Expr {
+  public:
+  VarAssignment(){}
+  int8 symbol[32];
+  Expr* right;
+  int8 op;
+};
+
 class Identifier: public Expr {
   public:
     Identifier(){}
@@ -81,14 +171,26 @@ class Identifier: public Expr {
 class NumericLiteral: public Expr {
   public:
     NumericLiteral(){}
-    uint32 number;
+    int32 number;
+};
+
+class StringLiteral: public Expr {
+  public:
+    StringLiteral(){}
+    int8 string[32];
+};
+
+class FunctionStatement: public Expr {
+  public:
+    FunctionStatement(){}
+    int8 symbol[32];
+    uint32 nargc;
+    Expr** argvs;
+    TokenType subtype;
 };
 
 
 
-#define MAX_IDENTIFIERS 512
-#define MAX_NUMBERS     512
-#define MAX_BINARYEXPRS 512
 
 Identifier identifier_pool[MAX_IDENTIFIERS];
 uint32 indentifier_count=0;
@@ -96,8 +198,18 @@ uint32 indentifier_count=0;
 NumericLiteral number_pool[MAX_NUMBERS];
 uint32 number_count=0;
 
+StringLiteral string_pool[MAX_STRINGS];
+uint32 string_count=0;
+
+
 BinaryExpr binaryexpr_pool[MAX_BINARYEXPRS];
 uint32 binaryexpr_count=0;
+
+VarAssignment varassignment_pool[MAX_VARASSIGNMENT];
+uint32 varassignment_count=0;
+
+FunctionStatement functionstatement_pool[MAX_FUNCTIONSTATEMENT];
+uint32 functionstatement_count=0;
 
 
 Identifier* make_identifiers(int8* sym){
@@ -109,12 +221,20 @@ memset((uint32)id->symbol,0,32);
   return id;
 }
 
-NumericLiteral* make_number(uint32 num){
+NumericLiteral* make_number(int32 num){
   if(number_count>=MAX_NUMBERS)return nullptr;
   NumericLiteral* n = &number_pool[number_count++];
   n->number=num;
   n->type=NodeNumericLiteral;
   return n;
+}
+
+StringLiteral* make_string(int8 str[32]){
+  if(string_count>=MAX_STRINGS)return nullptr;
+  StringLiteral* s = &string_pool[string_count++];
+  strcpy(s->string,str);
+  s->type=NodeStringLiteral;
+  return s;
 }
 
 BinaryExpr* make_binary_expr(Expr* l, Expr* r,TokenType o){
@@ -125,8 +245,29 @@ BinaryExpr* make_binary_expr(Expr* l, Expr* r,TokenType o){
   b->op=o;
   b->type=NodeBinaryExpr;
   return b;
-
 }
+
+VarAssignment* make_var_assignment(int8* sym, Expr* r,int8 o){
+  if(varassignment_count>=MAX_VARASSIGNMENT)return nullptr;
+  VarAssignment* v = &varassignment_pool[varassignment_count++];
+  strcpy(v->symbol,sym);
+  v->right=r;
+  v->type=NodeVarAssignment;
+  v->op=o;
+  return v;
+}
+
+FunctionStatement* make_function_statement(int8* sym, uint32 nar,Expr** ar,TokenType o){
+  if(functionstatement_count>=MAX_FUNCTIONSTATEMENT)return nullptr;
+  FunctionStatement* f = &functionstatement_pool[functionstatement_count++];
+  strcpy(f->symbol,sym);
+  f->nargc=nar;
+  f->argvs=ar;
+  f->subtype=o;
+  f->type=NodeFunctionStatement;
+  return f;
+}
+
 uint32 stackPrintNode=0;
 void printSpacesStack(){
   for(uint32 i=0;i<stackPrintNode;i++){
@@ -171,45 +312,105 @@ void printNodes(Statement* st){
     printf("OPERATOR: '%c'/n",ch);
 
     }
+  else if(st->type==NodeVarAssignment){
+    VarAssignment *va=(VarAssignment*)st;
+    printSpacesStack();
+    if(va->op==0)
+    printf("DECLARE: /n");
+    else
+    printf("ASSIGN: /n");
+
+    stackPrintNode++;
+    printSpacesStack();
+    printf("SYMBOL: ");
+    printf(va->symbol);
+    printf("/n");
+    printSpacesStack();
+    printf("RIGHT: /n");
+    stackPrintNode++;
+      printNodes((Statement*)va->right);
+    stackPrintNode--;
+    stackPrintNode--;
+
+
+  }
 }
 
 
-uint32 evaluateNodes(Statement *st){
+Expr* evaluateNodes(Statement *st,Environment *env){
   if(st->type==NodeNumericLiteral){
     NumericLiteral *lit=(NumericLiteral*)st;
-    return lit->number;
+    return lit;
   }
+  if(st->type==NodeIdentifier){
+    Identifier *id=(Identifier*)st;
+    NumericLiteral *num=make_number(env->lookupVar(id->symbol));
+    return num;
+  }
+
   if(st->type==NodeBinaryExpr){
     BinaryExpr *be=(BinaryExpr*)st;
-    uint32 l=evaluateNodes((Statement*)be->left);
-    uint32 r=evaluateNodes((Statement*)be->right);
-    uint32 result;
+    Expr* l=evaluateNodes((Statement*)be->left,env);
+    Expr* r=evaluateNodes((Statement*)be->right,env);
+    if(l->type!=NodeNumericLiteral&&r->type!=NodeNumericLiteral){
+      printf("ERROR on BinaryExpr/n");
+      return 0;
+    }
+
+    NumericLiteral* result;
+    NumericLiteral *lcast,*rcast;
+    lcast=(NumericLiteral*)l;
+    rcast=(NumericLiteral*)r;
+    
+    
     switch (be->op) {
       case PLUS:
-        return l+r;
+        return make_number(lcast->number+rcast->number);
       case MINUS:
-        return l-r;
+        return make_number(lcast->number-rcast->number);
       case STAR:
-        return l*r;
+        return make_number(lcast->number*rcast->number);
       case SLASH:
-        if(r!=0)
-        return l/r;
-        return 0;
+        if(rcast->number!=0)
+        return make_number(lcast->number/rcast->number);
+        return make_number(0);
       case EQUAL_EQUAL:
-        return l==r;
+        return make_number(lcast->number==rcast->number);
       case NOT_EQUAL:
-        return l!=r;
+        return make_number(lcast->number!=rcast->number);
       case GREATER:
-        return l>r;
+        return make_number(lcast->number>rcast->number);
       case GREATER_EQUAL:
-        return l>=r;
+        return make_number(lcast->number>=rcast->number);
       case LESS:
-        return l<r;
+        return make_number(lcast->number<rcast->number);
       case LESS_EQUAL:
-        return l<=r;
+        return make_number(lcast->number<=rcast->number);
           
     }
   }
+  if(st->type==NodeVarAssignment){
+    VarAssignment *va=(VarAssignment*)st;
+    NumericLiteral* r=(NumericLiteral*)evaluateNodes((Statement*)va->right,env);
+    if(va->op==0)
+    env->declareVar(va->symbol,r->number);
+    if(va->op==1)
+    env->assignVar(va->symbol,r->number);
+
+    return va;
+  }
+  if(st->type==NodeFunctionStatement){
+    FunctionStatement* fs=(FunctionStatement*)st;
+    if(fs->subtype==PRINT){
+      for(uint32 i=0;i<fs->nargc;i++){
+        NodeType t=fs->argvs[i]->type;
+        if(t==NodeNumericLiteral||t==NodeIdentifier||t==NodeBinaryExpr){
+          printf("%d",((NumericLiteral*)evaluateNodes((Statement*)fs->argvs[i],env))->number);
+        }
+      }
+    }
+  }
+
 }
 
 class Parser{
@@ -218,23 +419,73 @@ class Parser{
     uint32 aToken=0;
     
     Token at(){
-      return tokes[aToken];
+      return this->tokes[aToken];
     }
     Token eat(){
-      uint32 s=aToken;
-      aToken++;
-      return tokes[s];
+      uint32 s=this->aToken;
+      this->aToken++;
+      return this->tokes[s];
     }
+
+
 
     Statement* parse_stmt(){
-      return this->parse_expr();
+      switch (this->at().type) {
+
+        case VAR:
+          return parse_var_declaration();
+        case PRINT:
+          return parse_print_expression();
+        default:    
+          return this->parse_expr();
+      }
     }
 
-    Expr* parse_expr(){
-
-      return this->parse_comparison_expr();
+    Expr* parse_print_expression(){
+      uint32 n=0;
+      this->eat();
+      Expr* right=this->parse_comparison_expr();
+      Expr** args;
+      args[0]=right;
+      make_function_statement("PRINT",1,args,PRINT);
     }
+
+    Expr* parse_var_declaration(){
+      this->eat();
+      if(this->at().type!=IDENTIFIER){
+        printf("Syntaxis Error/n");
+      }
+      int8 name[32];
+      strcpy(name,this->at().value);
+      make_identifiers(this->eat().value);
+
+      if(this->eat().type!=EQUAL){
+       printf("Syntaxis Error/n");
+      }
+      
+      Expr* right=this->parse_expr();
+      return make_var_assignment(name,right,0);
+    }
+
     
+    Expr* parse_expr(){
+      return parse_var_assignment();      
+    }
+
+  
+    Expr* parse_var_assignment(){
+      Expr* left=this->parse_comparison_expr();
+      if(this->at().type==EQUAL){
+        this->eat();
+        Expr* right=this->parse_var_assignment();
+        Identifier* var =(Identifier* )left;
+        return make_var_assignment(var->symbol, right,1);
+      }
+      return left;
+
+    }
+
+       
     Expr* parse_comparison_expr(){
       Expr* left=this->parse_additive_expr();
 
@@ -279,16 +530,15 @@ class Parser{
         case NUMBER:
           return make_number(toInt(this->eat().value));
             break;
+        case STRING:
+            return make_string(this->eat().value);
+            break;
         case OPENPAREN:{
             this->eat();
             Expr* value=this->parse_expr();
             this->eat();
             return value;}
             break;
-        case VAR:
-              return make_number(toInt(this->eat().value));
-            break;
-
         default:
           printf("ERROR/n");
           return (Expr*)0;
@@ -302,14 +552,33 @@ class Parser{
       Statement* st[512];
       Program prog(NodeProgram,st);
       uint32 prog_count=0;
-  this->tokes=t;
+      this->tokes=t;
+      
+ indentifier_count=0;
+ number_count=0;
+ string_count=0;
+ binaryexpr_count=0;
+ varassignment_count=0;
+ functionstatement_count=0;
+
+      Environment* env;
+      env->init();
     
     while(this->at().type!=EOF){
   prog.body[prog_count++]=parse_stmt();
-   //printNodes(prog.body[prog_count-1]);
     }
-    printf("/nResult: %d",evaluateNodes(prog.body[prog_count-1]));
-      
+
+   //printNodes(prog.body[prog_count-1]);
+   for(uint32 i=0;i<prog_count;i++){
+    Expr* res=evaluateNodes(prog.body[i],env);
+   if(res->type==NodeNumericLiteral){
+     NumericLiteral* n=(NumericLiteral*)res;
+    printf("Statement %d return: %d/n",i+1,n->number);}
+    }
+
+    
+  
+          
       return prog;
     }
     
@@ -328,9 +597,18 @@ Token tokens[512];
 uint32 tokenIndex=0;
 
 
-void initInterpreterByArgv(int8* argv){}
-void initInterpreterByFile(DIR file){
+void initInterpreterByArgv(int8* argv){
+  tokenIndex=0;
+Lexer(argv);
 
+Parser parser;
+
+parser.produceAST(tokens);
+
+}
+
+void initInterpreterByFile(DIR file){
+  
   int8 buffer[512];
   memset((uint32)buffer,0,512);
  file.read((uint8*)buffer); 
@@ -338,9 +616,9 @@ void initInterpreterByFile(DIR file){
 
 Lexer(buffer+4);
 
-Parser p;
+Parser parser;
 
-p.produceAST(tokens);
+parser.produceAST(tokens);
 }
  
 
@@ -372,7 +650,7 @@ void printTokens(){
 void Lexer(int8* buffer){
  uint32 i=0;
  int8* referenceBuffer=buffer;
-
+memset((uint32)tokens,0,sizeof(Token)*512);
 //printf(buffer);
 //printf("/n");
 
@@ -382,6 +660,10 @@ while(buffer[0]!=0){
   if(buffer[0]==' '){
     buffer++;
     continue;
+  }
+  else if(buffer[0]==','){
+    asignToken(charToStr(buffer[0]),COMMA);
+    buffer++;
   }
   else if(buffer[0]=='('){
     asignToken(charToStr(buffer[0]),OPENPAREN);    
@@ -416,13 +698,17 @@ while(buffer[0]!=0){
     asignToken(charToStr(buffer[0]),EQUAL);
     buffer++;
   }
+
+
   else{
-    
+  
+
+
     if(buffer[0]=='!'&&buffer[1]=='='){
     asignToken(charToStr(buffer[0]),NOT_EQUAL);
         buffer+=2;
     }
-    if(buffer[0]=='>'){
+    else if(buffer[0]=='>'){
       if(buffer[1]=='='){
       asignToken(charToStr(buffer[0]),GREATER_EQUAL);
       buffer++;
@@ -432,7 +718,7 @@ while(buffer[0]!=0){
     buffer++;
     }
     
-    if(buffer[0]=='<'){
+    else if(buffer[0]=='<'){
       if(buffer[1]=='='){
       asignToken(charToStr(buffer[0]),LESS_EQUAL);
       buffer++;
@@ -440,6 +726,23 @@ while(buffer[0]!=0){
       else
     asignToken(charToStr(buffer[0]),LESS);
     buffer++;
+    }
+
+
+    else if(buffer[0]==34){
+
+      int8 str[32];
+    memset((uint32)str,0,32);
+    uint32 i=0;
+    buffer++;
+    while(buffer[0]!=34){
+      str[i]=buffer[0];
+      buffer++;
+      i++;
+    }
+    asignToken(str,NUMBER);
+    buffer--;
+
     }
 
     else if(isNumeric(buffer[0])){
@@ -485,7 +788,7 @@ while(buffer[0]!=0){
   }
 }
 asignToken("EOF",EOF);
-printTokens();
+//printTokens();
 
 
 }

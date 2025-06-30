@@ -60,6 +60,11 @@ void printDec(int32 dec)
 		nextPosition();
 		return;
 	}
+  uint8 sign=0;
+  if(dec<0){
+    dec=0U-dec;
+    sign=1;
+  }
 
 	while (dec)
 	{
@@ -67,7 +72,10 @@ void printDec(int32 dec)
 		dec /= 10;
 		digNum++;
 	}
-
+  if(sign){
+    draw_char(globalColumn*FontWidth,globalRow*FontHeight,'-',actualColor);
+    nextPosition();
+  }
 	for (int32 i = digNum - 1; i >= 0; i--)
 	{
 		draw_char(globalColumn*FontWidth,globalRow*FontHeight,digits[i]+48,actualColor);

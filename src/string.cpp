@@ -39,9 +39,9 @@ str[index]=character;
 }
 
 
-uint32 toInt(int8* str){
-  uint32 result=str[0]-48;
-  uint32 i=1;
+int32 toInt(int8* str){
+  int32 result=str[0]-48;
+  int32 i=1;
   while(isNumeric(str[i])){
     result=result*10+(str[i]-48);
   i++;

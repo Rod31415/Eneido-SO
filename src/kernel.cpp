@@ -7,20 +7,20 @@ extern "C" void _main(multiboot_info *mboot)
 	idt_install();
   initVFS();
   createFile("Leeme.txt");
-  uint8 buf[512]="    5 + 6 > 3 * 5";
-  //for(uint32 i=0;i<512;i++){
-  //  if(buf[i]=='/'){
-  //    buf[i]=13;
-  //  }
-  // }
+  uint8 buf[512]="     VAR y = 6 * 5 | y = 1 | y";
+  for(uint32 i=0;i<512;i++){
+    if(buf[i]=='|'){
+      buf[i]=13;
+    }
+   }
   *(buf)=(uint32)1;
   writeCluster(buf,64*8);
- inport(0x3da);
- outport(0x3c0,0x30);
- uint8 res=inport(0x3c1);
- outport(0x3c0,res&0xF7);
+// inport(0x3da);
+// outport(0x3c0,0x30);
+// uint8 res=inport(0x3c1);
+// outport(0x3c0,res&0xF7);
 
-
+outport(0x60,0xf4 );
 
 
 vbe_mode_info_struct* vbe=(vbe_mode_info_struct*)(uint32)mboot->vbe_mode_info;
