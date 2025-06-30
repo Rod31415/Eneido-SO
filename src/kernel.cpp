@@ -7,13 +7,13 @@ extern "C" void _main(multiboot_info *mboot)
 	idt_install();
   initVFS();
   createFile("Leeme.txt");
-  uint8 buf[512]=" =(12 + fooBar) * 4";
-  for(uint32 i=0;i<512;i++){
-    if(buf[i]=='/'){
-      buf[i]=13;
-    }
-  }
-  *(buf)=(uint32)4;
+  uint8 buf[512]="    5 + 6 > 3 * 5";
+  //for(uint32 i=0;i<512;i++){
+  //  if(buf[i]=='/'){
+  //    buf[i]=13;
+  //  }
+  // }
+  *(buf)=(uint32)1;
   writeCluster(buf,64*8);
  inport(0x3da);
  outport(0x3c0,0x30);

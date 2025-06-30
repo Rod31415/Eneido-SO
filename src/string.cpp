@@ -1,5 +1,13 @@
 #include "headers/string.h"
 
+int8 isNumeric(int8 ch){
+return (ch>=48&&ch<=57);
+}
+
+int8 isAlpha(int8 ch){
+return ((ch>=65&&ch<=90)||(ch>=97&&ch<=122));
+}
+
 uint32 lenghtStr(int8 *str){
 uint32 length=0;
     while (str[length] != 0)
@@ -30,6 +38,17 @@ str[index]=character;
 
 }
 
+
+uint32 toInt(int8* str){
+  uint32 result=str[0]-48;
+  uint32 i=1;
+  while(isNumeric(str[i])){
+    result=result*10+(str[i]-48);
+  i++;
+  }
+
+return result;
+}
 
 int8 strcpy(int8 *str1, int8 *str2, uint16 size)
 {

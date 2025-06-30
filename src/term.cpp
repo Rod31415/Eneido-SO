@@ -418,11 +418,12 @@ inf(argv[1]);
 
 void loop_term()
 {
-
+  
   character = inport(0x60);
   ch = s;
   s = getKeyboardKey(character);
   if(s == ch)return;
+
   if (s == 136){
     
   }
