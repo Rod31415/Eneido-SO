@@ -38,6 +38,20 @@ str[index]=character;
 
 }
 
+void appendStr(int8 *str1,int8* str2){
+
+uint32 l=lenghtStr(str1);
+strcpy(str1+l,str2);
+
+}
+
+void splitStr(int8* strOrigin, int8* splited,uint32 index){
+
+  strcpy(splited,strOrigin+index);
+  strOrigin[index]=0;
+
+}
+
 
 int32 toInt(int8* str){
   int32 result=str[0]-48;

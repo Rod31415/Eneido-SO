@@ -7,7 +7,7 @@ extern "C" void _main(multiboot_info *mboot)
 	idt_install();
   initVFS();
   createFile("Leeme.txt");
-  uint8 buf[512]="     VAR y = 6 * 5 | y = 1 | y";
+  uint8 buf[512]="     VAR c=2 | c=c+2 | c+1 ";
   for(uint32 i=0;i<512;i++){
     if(buf[i]=='|'){
       buf[i]=13;
