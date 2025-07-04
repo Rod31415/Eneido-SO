@@ -90,7 +90,11 @@ maxRowsInFile=*(buff);
 changeColor(0x0f);
 for(uint32 i=0;i<height;i++){
 gotoxy(colOffSet,i);
-printf(lineStr[i]);
+uint32 index=0;
+      while(lineStr[i][index]!=0){
+      printChr(lineStr[i][index]);
+      index++;
+      }
 
 }
 
@@ -115,7 +119,11 @@ uint8 buffer[41];
       printf((int8 *)buffer);
 
       gotoxy(colOffSet,row);
-      printf(lineStr[row]);
+      uint32 index=0;
+      while(lineStr[row][index]!=0){
+      printChr(lineStr[row][index]);
+      index++;
+      }
 }
 
 void checkSize(){
@@ -135,10 +143,10 @@ void refreshMaxFileRows(){
 void passRow(uint32 r){
 
 for(uint32 i=height;i>r+1;i--){
-  memcpy((uint32)lineStr[i-1],(uint32)lineStr[i],40);
+  memcpy((uint32)lineStr[i-1],(uint32)lineStr[i],80);
 }
 
-  memset((uint32)lineStr[r+1],0,40);
+  memset((uint32)lineStr[r+1],0,80);
   //lineStr[r+1][0]=' ';
   splitStr(lineStr[r],lineStr[r+1],col);
   int8 zerob[40];
@@ -147,7 +155,11 @@ for(uint32 i=0;i<height-1;i++){
 gotoxy(colOffSet,i);
 printf(zerob);
 gotoxy(colOffSet,i);
-printf(lineStr[i]);
+uint32 index=0;
+      while(lineStr[i][index]!=0){
+      printChr(lineStr[i][index]);
+      index++;
+      }
   }
 }
 
@@ -167,7 +179,11 @@ for(uint32 i=0;i<height-1;i++){
 gotoxy(colOffSet,i);
 printf(zerob);
 gotoxy(colOffSet,i);
-printf(lineStr[i]);
+uint32 index=0;
+      while(lineStr[i][index]!=0){
+      printChr(lineStr[i][index]);
+      index++;
+      }
   }
 drawSide();
 drawBottom();

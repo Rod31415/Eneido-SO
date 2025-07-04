@@ -1,10 +1,10 @@
 #include "headers/interpreter.h"
 
-#define MaxReservedWords 2
-#define MaxTokensTypes 21
+#define MaxReservedWords 3
+#define MaxTokensTypes 23
 
 int8 TokenWords[MaxTokensTypes][32]={
-  "VAR","PRINT",
+  "VAR","PRINT","INPUT",
   "OPENPAREN", "CLOSEPAREN", "DOT", "PLUS", "MINUS",
   "STAR", "SLASH",
 
@@ -13,7 +13,7 @@ int8 TokenWords[MaxTokensTypes][32]={
   "EQUAL_EQUAL", "NOT_EQUAL", "GREATER", "LESS",
   "GREATER_EQUAL", "LESS_EQUAL",
 
-  "COMMA",
+  "COMMA","SEMICOLON",
 
   "IDENTIFIER", "NUMBER", "STRING",
 
@@ -22,7 +22,7 @@ int8 TokenWords[MaxTokensTypes][32]={
 
 enum TokenType{
    
-  VAR=0,PRINT,
+  VAR=0, PRINT, INPUT,
   OPENPAREN, CLOSEPAREN, DOT, PLUS, MINUS,
   STAR, SLASH,
 
@@ -31,7 +31,7 @@ enum TokenType{
   EQUAL_EQUAL, NOT_EQUAL, GREATER, LESS,
   GREATER_EQUAL, LESS_EQUAL,
 
-  COMMA,
+  COMMA, SEMICOLON,
 
   IDENTIFIER, NUMBER, STRING,
 
@@ -58,53 +58,63 @@ buffer++;
 #define MAX_BINARYEXPRS   512
 #define MAX_VARASSIGNMENT 512
 #define MAX_FUNCTIONSTATEMENT 512
+#define MAX_UNARYFUNCTIONSTATEMENT 512
 
 
+uint32 variables[MAX_IDENTIFIERS];
+int8 symbols[MAX_IDENTIFIERS][32];
+uint32 varIndex=0;
 class Environment{
 private:
   Environment *parent;
-  uint32 varIndex=0;
-  uint32 variables[MAX_IDENTIFIERS];
-  int8 symbols[MAX_IDENTIFIERS][32];
+  uint32 variablesEnv[MAX_IDENTIFIERS];
+  int8 symbolsEnv[MAX_IDENTIFIERS][32];
   public:
   Environment(){
   }
 
   void init(){
-  this->varIndex=0;
-  for(uint32 i=0;i<MAX_IDENTIFIERS;i++){
-  memset((uint32)this->variables[i],0,sizeof(uint32));
-  memset((uint32)this->symbols[i],0,32);
-  }
+  varIndex=0;
+  memset((uint32)variables,0,sizeof(uint32)*MAX_IDENTIFIERS);
+  for(uint32 i=0;i<varIndex;i++)
+  memset((uint32)symbols[i],0,32);
   }
 
-  int32 has(int8* varname){
-    for(uint32 i=0;i<this->varIndex;i++){
-      if(strcmp(varname,this->symbols[i])==0)return i+1;
+  uint32 has(int8* varname){
+    for(uint32 i=0;i<varIndex;i++){
+      if(strcmp(varname,symbols[i])==0)return i+1;
     }
     return 0;
+  }
+  
+  void showVars(){
+  for(uint32 i=0;i<varIndex;i++){
+    printf("/n");
+      printf(symbols[i]);
+      printf(": value: %d",variables[i]);
+    }
   }
 
   uint32 declareVar(int8* varname, uint32 value){
     uint32 s=this->has(varname);
     if(s!=0){printf("VARIABLE YA DECLARADA: '");printf(varname);printf("'/n");return 0;}
-    this->variables[this->varIndex]=value;
-    strcpy(this->symbols[this->varIndex],varname);
-    this->varIndex++;
+    variables[varIndex]=value;
+    strcpy(symbols[varIndex],varname);
+    varIndex++;
         return value;
   }
   uint32 lookupVar(int8* varname){
     uint32 s=this->has(varname);
     if(s==0){printf("VARIABLE NO DECLARADA: '");printf(varname);printf("'/n");return 0;}
-    uint32 value=this->variables[s-1];
+    uint32 value=variables[s-1];
     return value;
   }
 
   uint32 assignVar(int8* varname,uint32 value){
     int32 s=this->has(varname);
     if(s==0){printf("VARIABLE NO DECLARADA: '");printf(varname);printf("'/n");return 0;}
+    variables[s-1]=value;
 
-    this->variables[s-1]=value;
   
     return value;
   }
@@ -114,8 +124,6 @@ private:
 
 
 };
-
-
 
 
 
@@ -130,8 +138,8 @@ enum NodeType{
   NodeIdentifier,
   NodeBinaryExpr,
   NodeVarAssignment,
-  NodeFunctionStatement
-  
+  NodeFunctionStatement,
+  NodeUnaryFunctionStatement
 };
 
 class Statement{
@@ -182,6 +190,14 @@ class StringLiteral: public Expr {
     int8 string[32];
 };
 
+class UnaryFunctionStatement: public Expr {
+  public:
+    UnaryFunctionStatement(){}
+    int8 symbol[32];
+    Expr* arg;
+    TokenType subtype;
+};
+
 class FunctionStatement: public Expr {
   public:
     FunctionStatement(){}
@@ -213,12 +229,15 @@ uint32 varassignment_count=0;
 FunctionStatement functionstatement_pool[MAX_FUNCTIONSTATEMENT];
 uint32 functionstatement_count=0;
 
+UnaryFunctionStatement unaryfunctionstatement_pool[MAX_UNARYFUNCTIONSTATEMENT];
+uint32 unaryfunctionstatement_count=0;
+
+
 
 Identifier* make_identifiers(int8* sym){
   if(indentifier_count>=MAX_IDENTIFIERS)return nullptr;
   Identifier* id =&identifier_pool[indentifier_count++];
-memset((uint32)id->symbol,0,32);
-  strcpy(id->symbol,sym);
+  memcpy((uint32)sym,(uint32)id->symbol,32);
   id->type=NodeIdentifier;
   return id;
 }
@@ -252,12 +271,44 @@ return b;
 VarAssignment* make_var_assignment(int8* sym, Expr* r,int8 o){
   if(varassignment_count>=MAX_VARASSIGNMENT)return nullptr;
   VarAssignment* v = &varassignment_pool[varassignment_count++];
-  strcpy(v->symbol,sym);
+  memcpy((uint32)sym,(uint32)v->symbol,32);
   v->right=r;
   v->type=NodeVarAssignment;
   v->op=o;
   return v;
 }
+
+UnaryFunctionStatement* make_unary_function_statement(int8* sym, Expr* ar,TokenType o){
+  if(unaryfunctionstatement_count>=MAX_UNARYFUNCTIONSTATEMENT)return nullptr;
+  UnaryFunctionStatement* f = &unaryfunctionstatement_pool[unaryfunctionstatement_count++];
+  strcpy(f->symbol,sym);
+
+    if(ar->type==NodeBinaryExpr){
+      BinaryExpr* b=(BinaryExpr*)ar;
+      f->arg=make_binary_expr(b->left,b->right,b->op);
+    }
+
+    else if(ar->type==NodeIdentifier){
+      Identifier* b=(Identifier*)ar;
+      f->arg=make_identifiers(b->symbol);
+    }
+
+    else if(ar->type==NodeStringLiteral){
+      StringLiteral* b=(StringLiteral*)ar;
+      f->arg=make_string(b->string);
+    }
+
+    else if(ar->type==NodeNumericLiteral){
+      NumericLiteral* b=(NumericLiteral*)ar;
+      f->arg=make_number(b->number);
+    }
+
+  
+  f->subtype=o;
+  f->type=NodeUnaryFunctionStatement;
+  return f;
+}
+
 
 FunctionStatement* make_function_statement(int8* sym, uint32 nar,Expr** ar,TokenType o){
   if(functionstatement_count>=MAX_FUNCTIONSTATEMENT)return nullptr;
@@ -380,6 +431,18 @@ void printNodes(Statement* st){
 
 
   }
+  else if(st->type==NodeUnaryFunctionStatement){
+    UnaryFunctionStatement* uf=(UnaryFunctionStatement*)st;
+    printSpacesStack();
+      printf("UNARY FUNCTION: ");
+      printf(uf->symbol);
+      printf("/n");
+    printSpacesStack();
+      stackPrintNode++;
+      printNodes((Statement*)uf->arg);
+      stackPrintNode--;
+
+  }
   else if(st->type==NodeStringLiteral){
     StringLiteral *str =(StringLiteral*) st;
     printSpacesStack();
@@ -397,30 +460,45 @@ Expr* evaluateNodes(Statement *st,Environment *env){
     return str;
   }
 
-  if(st->type==NodeNumericLiteral){
+  else if(st->type==NodeNumericLiteral){
     NumericLiteral *lit=(NumericLiteral*)st;
     return lit;
   }
-  if(st->type==NodeIdentifier){
+  else if(st->type==NodeIdentifier){
     Identifier *id=(Identifier*)st;
-    NumericLiteral *num=make_number(env->lookupVar(id->symbol));
-    return num;
+    NumericLiteral *num;
+    num->number=env->lookupVar(id->symbol);
+    num->type=NodeNumericLiteral;
+
+    return id;
   }
 
-  if(st->type==NodeBinaryExpr){
+  else if(st->type==NodeBinaryExpr){
     BinaryExpr *be=(BinaryExpr*)st;
     Expr* l=evaluateNodes((Statement*)be->left,env);
     Expr* r=evaluateNodes((Statement*)be->right,env);
-    if(l->type!=NodeNumericLiteral&&r->type!=NodeNumericLiteral){
-      printf("ERROR on BinaryExpr/n");
-      return 0;
-    }
-
+    //if(l->type!=NodeNumericLiteral&&r->type!=NodeNumericLiteral){
+    //  printf("ERROR on BinaryExpr/n");
+    //  return 0;
+    //}
     NumericLiteral* result;
     NumericLiteral *lcast,*rcast;
     lcast=(NumericLiteral*)l;
     rcast=(NumericLiteral*)r;
+
+    if(l->type==NodeIdentifier){
+      uint32 n=env->lookupVar(((Identifier*)l)->symbol);
+      lcast->number=n;
+      lcast->type=NodeNumericLiteral;
+    }
     
+    if(r->type==NodeIdentifier){
+      uint32 n=env->lookupVar(((Identifier*)r)->symbol);
+      rcast->number=n;
+      rcast->type=NodeNumericLiteral;
+    }
+
+        
     
     switch (be->op) {
       case PLUS:
@@ -448,7 +526,7 @@ Expr* evaluateNodes(Statement *st,Environment *env){
           
     }
   }
-  if(st->type==NodeVarAssignment){
+  else if(st->type==NodeVarAssignment){
     VarAssignment *va=(VarAssignment*)st;
     NumericLiteral* r=(NumericLiteral*)evaluateNodes((Statement*)va->right,env);
     if(va->op==0)
@@ -459,9 +537,9 @@ Expr* evaluateNodes(Statement *st,Environment *env){
     return va;
   }
 
-  if(st->type==NodeFunctionStatement){
+  else if(st->type==NodeFunctionStatement){
     FunctionStatement* fs=(FunctionStatement*)st;
-    if(fs->subtype==PRINT){
+    /*if(fs->subtype==PRINT){
       for(uint32 i=0;i<fs->nargc;i++){
         Statement *t=(Statement*)evaluateNodes(fs->argvs[i],env);
 
@@ -473,10 +551,60 @@ Expr* evaluateNodes(Statement *st,Environment *env){
         }
       }
       printf("/n");
+    }*/
+  }
+  else if(st->type==NodeUnaryFunctionStatement){
+    UnaryFunctionStatement* uf=(UnaryFunctionStatement*)st;
+    if(uf->subtype==PRINT){
+      Statement *t=(Statement*)evaluateNodes(uf->arg,env);
+      if(t->type==NodeStringLiteral){
+        printf(((StringLiteral*)t)->string);
+      }
+      else if(t->type==NodeNumericLiteral){
+        printf("%d",((NumericLiteral*)t)->number);
+      }
+      else if(t->type==NodeIdentifier){
+      uint32 n=env->lookupVar(((Identifier*)t)->symbol);
+        printf("%d",n);
+      }
+      refresh();
+    }
+    else if(uf->subtype==INPUT){
+            #define ENTER 128 
+      uint8 ch=ENTER, lastch=ENTER;
+      uint8 code;
+      uint32 Intindex=0;
+      int8 num[32];
+      while(1){
+        code=inport(0x60);
+        lastch=ch;
+        ch=getKeyboardKey(code);
+        if(lastch==ch)continue;
+        if(isNumeric(ch)){
+          printf("%d",ch-48);
+          num[Intindex++]=ch;
+          refresh();
+        }
+        if(ch==ENTER)break;
+
+        }
+        Statement* s=evaluateNodes(uf->arg,env);
+        if(s->type==NodeIdentifier){
+        Identifier* i=(Identifier*)s;
+        refresh();
+        env->assignVar(i->symbol,toInt(num));
+        }
+        else{
+          printf("/nPorque no es una variables?? el %d /n",s->type);
+        }
+      
     }
   }
-
+refresh();
 }
+
+
+uint8 SHOWVARS=0;
 
 class Parser{
   private:
@@ -492,6 +620,15 @@ class Parser{
       this->aToken++;
       return this->tokes[s];
     }
+    Token expect(TokenType t){
+      if(this->at().type!=t){
+        printf("ERROR on ");
+        printf(TokenWords[this->at().type]);
+        printf("/n");
+      }
+      return this->eat();
+
+    }
 
 
 
@@ -501,19 +638,30 @@ class Parser{
           return parse_var_declaration();
         case PRINT:
           return parse_print_expression();
+        case INPUT:
+          return parse_input_expression();
         default:    
           return this->parse_expr();
       }
     }
 
-    Expr* parse_print_expression(){
-      uint32 n=0;
+    Expr *parse_input_expression(){
       this->eat();
       Expr** args;
       args=parse_args();
 
-      return make_function_statement("PRINT",this->globalNum,args,PRINT);
+      return make_unary_function_statement("INPUT",args[0],INPUT);
     }
+
+    Expr* parse_print_expression(){
+      this->eat();
+      Expr** args;
+      args=parse_args();
+
+      return make_unary_function_statement("PRINT",args[0],PRINT);
+    }
+
+
     Expr **parse_args(){
       
       if(this->at().type!=OPENPAREN){printf("ERROR");}this->eat();
@@ -522,6 +670,7 @@ class Parser{
 
       return args;
     }
+
     Expr **parse_args_list(){
       Expr **args;
       args[0]=this->parse_expr();
@@ -553,7 +702,7 @@ class Parser{
 
     
     Expr* parse_expr(){
-      return parse_var_assignment();      
+      return parse_var_assignment();
     }
 
   
@@ -621,10 +770,12 @@ class Parser{
             this->eat();
             Expr* value=this->parse_expr();
             this->eat();
-            return value;}
-            break;
+            return value;}break;
         default:
-          printf("ERROR/n");
+          this->eat();
+          printf("ERROR :");
+          printf("%d",tk);
+          printf("/n");
           return (Expr*)0;
           break;
       }
@@ -644,26 +795,27 @@ class Parser{
  binaryexpr_count=0;
  varassignment_count=0;
  functionstatement_count=0;
-this->globalNum=0;
+ unaryfunctionstatement_count=0;
+
+      this->globalNum=0;
       Environment* env;
       env->init();
     
     while(this->at().type!=EOF){
-  prog.body[prog_count++]=parse_stmt();
-    }
-
-
-   for(uint32 i=0;i<prog_count;i++){
+    prog.body[prog_count++]=this->parse_stmt();
+        }
     
-  //printNodes(prog.body[i]);
-     Expr* res=evaluateNodes(prog.body[i],env);
-
-      //printf("/n");
+   for(uint32 i=0;i<prog_count;i++){
+     //printNodes(prog.body[i]);
+    Expr* res=evaluateNodes(prog.body[i],env);
     if(res->type==NodeNumericLiteral){
-     NumericLiteral* n=(NumericLiteral*)res;
-    printf("Statement %d return: %d/n",i+1,n->number);
+      NumericLiteral* n=(NumericLiteral*)res;
+      printf("Statement %d return: %d/n",i,n->number);
    }
-  }
+    }
+  
+if(SHOWVARS)
+env->showVars();
 
     
   
@@ -690,13 +842,17 @@ void initInterpreterByArgv(int8* argv){
   tokenIndex=0;
 Lexer(argv);
 
-Parser parser;
+//Parser parser;
 
-parser.produceAST(tokens);
+//parser.produceAST(tokens);
 
 }
 
-void initInterpreterByFile(DIR file){
+uint8 SHOWTOKENS=0;
+
+void initInterpreterByFile(DIR file,uint8 opt1,uint8 opt2){
+  SHOWVARS=opt1;
+  SHOWTOKENS=opt2;
   
   int8 buffer[512];
   memset((uint32)buffer,0,512);
@@ -708,6 +864,7 @@ Lexer(buffer+4);
 Parser parser;
 
 parser.produceAST(tokens);
+
 }
  
 
@@ -746,9 +903,13 @@ memset((uint32)tokens,0,sizeof(Token)*512);
 
 while(buffer[0]!=0){
 
-  if(buffer[0]==' '){
+  if(buffer[0]==' '||buffer[0]==13||buffer[0]==1){
     buffer++;
     continue;
+  }
+  else if(buffer[0]==';'){
+    asignToken(charToStr(buffer[0]),SEMICOLON);
+    buffer++;
   }
   else if(buffer[0]==','){
     asignToken(charToStr(buffer[0]),COMMA);
@@ -818,7 +979,7 @@ while(buffer[0]!=0){
     }
 
 
-    else if(buffer[0]==34){
+    else if(buffer[0]==39){
 
       int8 str[32];
     memset((uint32)str,0,32);
@@ -828,7 +989,7 @@ while(buffer[0]!=0){
       str[i]=buffer[0];
       buffer++;
       i++;
-      if(buffer[0]==34)break;
+      if(buffer[0]==39)break;
     }
     asignToken(str,STRING);
 
@@ -871,13 +1032,17 @@ while(buffer[0]!=0){
     asignToken(ide,IDENTIFIER);
     buffer--;
   }
+    else{
+      printf("LEXER ERROR '%d' on %d /n",buffer[0],buffer-referenceBuffer);
 
-   // printf("%d ",buffer-referenceBuffer);
-    buffer++;
+    }
+
+        buffer++;
   }
 }
 asignToken("EOF",EOF);
-//printTokens();
+if(SHOWTOKENS)
+printTokens();
 
 
 }

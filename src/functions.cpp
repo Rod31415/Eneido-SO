@@ -123,7 +123,7 @@ void printBin(int32 bin)
 
 
 
-void printChr(int32 chr)
+void printChr(uint32 chr)
 {
   draw_char(globalColumn*FontWidth,globalRow*FontHeight,(uint8)(chr & 255),actualColor);
 	nextPosition();

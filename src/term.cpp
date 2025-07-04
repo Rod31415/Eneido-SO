@@ -386,14 +386,21 @@ inf(argv[1]);
     new_line_term();
   }
   
-  else if(argc==2 && strcmp(argv[0],"doen")==0){
+  else if(argc>=2 && strcmp(argv[0],"doen")==0){
     backspace();
     DIR file=searchFile(argv[1]);
     if(file.name[0]==0){
       initInterpreterByArgv(argv[1]);
     }
     else{
-    initInterpreterByFile(file);}
+      uint8 opt1=0,opt2=0;
+      for(uint32 i=2;i<argc;i++){
+        if(argv[i][0]=='-'){
+          if(argv[i][1]=='v')opt1=1;
+          else if(argv[i][1]=='t')opt2=1;
+        }
+      }
+    initInterpreterByFile(file,opt1,opt2);}
     new_line_term();
   }
 
