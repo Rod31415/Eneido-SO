@@ -7,13 +7,15 @@ extern "C" void _main(multiboot_info *mboot)
 	idt_install();
   initVFS();
   createFile("Leeme.txt");
-  uint8 buf[512]="     VAR x=1| PRINT('Ingrese su edad : ')| INPUT(x)| PRINT('/n Su edad es :')| PRINT(x)";
+  //uint8 buf[512]="    VAR x=1 VAR s=1 PRINT('Ingrese un numero : ') | INPUT (x) |PRINT('/n')PRINT(x)PRINT(' x ')PRINT(s)PRINT(' = ')PRINT(x*s)s=s+1|PRINT('/n')PRINT(x)PRINT(' x ')PRINT(s)PRINT(' = ')PRINT(x*s)s=s+1|PRINT('/n')PRINT(x)PRINT(' x ')PRINT(s)PRINT(' = ')PRINT(x*s)s=s+1|PRINT('/n')PRINT(x)PRINT(' x ')PRINT(s)PRINT(' = ')PRINT(x*s)s=s+1|PRINT('/n')PRINT(x)PRINT(' x ')PRINT(s)PRINT(' = ')PRINT(x*s)s=s+1"; 
+    uint8 buf[512]="     var x=1 | var s=1 | print('Ingrese su edad: ') input(x) |print('/n') |if(x== 18)|{print('ES MAYOR')|} ";
   for(uint32 i=0;i<512;i++){
     if(buf[i]=='|'){
       buf[i]=13;
     }
    }
   *(buf)=(uint32)10;
+
   writeCluster(buf,64*8);
 // inport(0x3da);
 // outport(0x3c0,0x30);
