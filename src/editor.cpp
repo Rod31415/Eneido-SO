@@ -112,9 +112,9 @@ loopEditor();
 
 void printLine(){
 
-uint8 buffer[41];
-      memset((uint32)buffer,32,40);
-      buffer[41]=0;
+uint8 buffer[81 - colOffSet];
+      memset((uint32)buffer,32,81- colOffSet -1);
+      buffer[81- colOffSet]=0;
       gotoxy(colOffSet,row);
       printf((int8 *)buffer);
 

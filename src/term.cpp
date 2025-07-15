@@ -430,7 +430,7 @@ void loop_term()
   ch = s;
   s = getKeyboardKey(character);
   if(s == ch)return;
-
+  
   if (s == 136){
     
   }

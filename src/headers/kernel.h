@@ -12,7 +12,7 @@
 #include "diskDriver.h"
 #include "vga.h"
 #include "pci.h"
-
+#include "fat.h"
 
 
 /*

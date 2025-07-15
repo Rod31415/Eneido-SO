@@ -50,25 +50,25 @@ globalColumn=0;
 
 }
 
-void printDec(int32 dec)
+void printDec(int32 dec,uint8 s=0)
 {
-	int32 digNum = 0;
-	int32 digits[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	uint32 digNum = 0;
+	uint32 digits[30];
 	if (dec == 0)
 	{
-    draw_char(globalColumn*FontWidth,globalRow*FontHeight,48,actualColor);
+    draw_char(globalColumn*FontWidth,globalRow*FontHeight,'0',actualColor);
 		nextPosition();
 		return;
 	}
   uint8 sign=0;
-  if(dec<0){
+  if(dec<0&&!s){
     dec=0U-dec;
     sign=1;
   }
 
 	while (dec)
 	{
-		digits[digNum] = dec % 10;
+		digits[digNum] = (uint32)(dec % 10);
 		dec /= 10;
 		digNum++;
 	}
@@ -78,19 +78,35 @@ void printDec(int32 dec)
   }
 	for (int32 i = digNum - 1; i >= 0; i--)
 	{
-		draw_char(globalColumn*FontWidth,globalRow*FontHeight,digits[i]+48,actualColor);
+		draw_char(globalColumn*FontWidth,globalRow*FontHeight,digits[i]+'0',actualColor);
 		nextPosition();
 	}
 }
 
-void printHex(uint32 hex)
+void printHex(uint32 hex,uint8 opt=0)
 {
+  if(opt){
+draw_char(globalColumn*FontWidth,globalRow*FontHeight,((hex & 0x0f) > 9 ? (hex & 0x0f + 'A' - 10) : ((hex & 0x0f) + '0')),actualColor);
+	nextPosition();
+		draw_char(globalColumn*FontWidth,globalRow*FontHeight,(((hex & 0xf0) >> 4 )> 9 ? (((hex & 0xf0) >> 4 )+ 'A' - 10) : (((hex & 0xf0) >> 4) + '0')),actualColor);
+	nextPosition();
+    return;
+  }
 
-		draw_char(globalColumn*FontWidth,globalRow*FontHeight,((hex & 0x0f) > 9 ? (hex & 0x0f + 55) : (hex & 0x0f + 48)),actualColor);
-	nextPosition();
-		draw_char(globalColumn*FontWidth,globalRow*FontHeight,((hex & 0xf0) / 16 > 9 ? ((hex & 0xf0) / 16 + 55) : ((hex & 0xf0) / 16 + 48)),actualColor);
-	nextPosition();
+  uint32 digNum=0;
+  int8 digits[8];
+  while(hex){
+    digits[digNum]=((hex & 0x0f) > 9 ? (hex & 0x0f + 'A' - 10) : ((hex & 0x0f) + '0'));
+    hex>>=4;
+    digNum++;
+  }
+  for(int32 i=digNum-1;i>=0;i--){
+	draw_char(globalColumn*FontWidth,globalRow*FontHeight,digits[i],actualColor);
+  nextPosition();}
+
+  
 }
+
 
 void printFlo(float flo)
 {
@@ -156,18 +172,33 @@ void printf(const char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int
 		{
 			if (str[i + 1] == 'd')
 			{
-				printDec(args[argNum]);
+				printDec(args[argNum],0);
+				i += 2;
+				argNum++;
+				continue;
+			}
+      if (str[i + 1] == 'u')
+			{
+				printDec(args[argNum],1);
 				i += 2;
 				argNum++;
 				continue;
 			}
 			if (str[i + 1] == 'x')
 			{
-				printHex(args[argNum]);
+				printHex(args[argNum],1);
 				i += 2;
 				argNum++;
 				continue;
 			}
+      if (str[i + 1] == 'h')
+			{
+				printHex(args[argNum],0);
+				i += 2;
+				argNum++;
+				continue;
+			}
+
 			if (str[i + 1] == 'f')
 			{
 				printFlo(args[argNum]);

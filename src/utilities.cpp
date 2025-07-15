@@ -43,6 +43,12 @@ void outport(uint16 port, uint8 data)
 {
 	__asm__ __volatile__("outb %1, %0" : : "dN"(port), "a"(data));
 }
+
+void outportw(uint16 port, uint16 data)
+{
+	__asm__ __volatile__("outw %1, %0" : : "dN"(port), "a"(data));
+}
+
 void outportl(uint16 port, uint32 data)
 {
 	__asm__ __volatile__("outl %1, %0" : : "dN"(port), "a"(data));
@@ -216,6 +222,8 @@ uint8 getKeyboardKey(uint8 input)
 	case 53:
 		return (shiftOn) ? '_' : '-';
 		break;
+  case 86:
+    return (shiftOn) ? '>' : '<';
 	case 14://TAB
 		return 129;
 		break;

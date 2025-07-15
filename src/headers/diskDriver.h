@@ -7,5 +7,6 @@
 void initDisk();
 
 void readDiskLBA(uint32 lba,uint8 *buffer);
+void writeDiskLBA(uint32 lba,uint8 *buffer);
 
 #endif

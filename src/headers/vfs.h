@@ -4,11 +4,8 @@
 #include "functions.h"
 #include "string.h"
 typedef struct{
-
 uint32 directions;
 uint32 clusters;
-
-
 }__attribute__((packed)) FILESYSTEM;
 
 
