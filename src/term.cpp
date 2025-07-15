@@ -75,12 +75,10 @@ void formatCommand()
   uint8 active = 1;
   uint8 comm = 0;
   int i;
+  
   for (int j = 0; j < 10; j++)
   {
-    for (i = 0; i < 80; i++)
-    {
-      argv[j][i] = 0;
-    }
+      argv[j][0] = 0;
   }
   i = 0;
   int a = 0;
@@ -99,6 +97,7 @@ void formatCommand()
       {
         argc++;
         active = 1;
+        if(argc>9)argc=9;
       }
       cn = 1;
       a = i + 1;
@@ -108,8 +107,11 @@ void formatCommand()
     {
       active = 0;
     }
-    if (!cn)
+    if (!cn){
+    if((i-a)<79&&argc<10){
       argv[argc - 1][i - a] = line[i];
+    }
+  }
 
   } while (line[++i] != 0);
 }
@@ -404,6 +406,14 @@ inf(argv[1]);
     new_line_term();
   }
 
+  else if(argc==2 && strcmp(argv[0],"send")==0){
+    backspace();
+    uint8 mac[6]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+    int8 buf[60];
+    strcpy(buf,argv[1]);
+    Rtl8139SendPacket(mac,(uint8*)buf,lenghtStr(buf));
+  }
+
   else
   {
     backspace();
@@ -430,7 +440,7 @@ void loop_term()
   ch = s;
   s = getKeyboardKey(character);
   if(s == ch)return;
-  
+
   if (s == 136){
     
   }
@@ -464,6 +474,7 @@ void loop_term()
     new_line_term();
   getConsoleCursorPosition(&xCursor,&yCursor);
     update_cursor(xCursor, yCursor);
+    
     formatCommand();
     if (argv[0][0] != 0){
 strcpy(linesHistory[actualLine],line,80);
@@ -486,8 +497,11 @@ strcpy(linesHistory[actualLine],line,80);
   if (s != 0 && s < 128 && !boolOnTest)
   {
     printf("%c", (char)s);
+    if(indexLetter<79){
     line[indexLetter] = s;
     indexLetter++;
+    line[indexLetter] = 0;}
+
   getConsoleCursorPosition(&xCursor,&yCursor);
     update_cursor(xCursor, yCursor);
   }

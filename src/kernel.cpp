@@ -31,19 +31,18 @@ clear_screen(0);
   changeColor(0x0f);
 
 initDisk();
+//printf("/n");
+  PCIInitDrivers();
+  //uint8 mac[6]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+//uint8 buff[]="hola";
+    //Rtl8139SendPacket(mac,buff,sizeof(buff)-1);
 
   init_term(mboot);
-  PCIInitDrivers();
-  PCIShowDevices();
-  
-  
-
-  
-refresh();
+  //refresh();
   while (1)
   {
 
-   // loop_term();
+   loop_term();
   }
 
 	return;

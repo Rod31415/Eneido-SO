@@ -86,9 +86,10 @@ void printDec(int32 dec,uint8 s=0)
 void printHex(uint32 hex,uint8 opt=0)
 {
   if(opt){
-draw_char(globalColumn*FontWidth,globalRow*FontHeight,((hex & 0x0f) > 9 ? (hex & 0x0f + 'A' - 10) : ((hex & 0x0f) + '0')),actualColor);
-	nextPosition();
+
 		draw_char(globalColumn*FontWidth,globalRow*FontHeight,(((hex & 0xf0) >> 4 )> 9 ? (((hex & 0xf0) >> 4 )+ 'A' - 10) : (((hex & 0xf0) >> 4) + '0')),actualColor);
+	nextPosition();
+	draw_char(globalColumn*FontWidth,globalRow*FontHeight,((hex & 0x0f) > 9 ? (hex & 0x0f + 'A' - 10) : ((hex & 0x0f) + '0')),actualColor);
 	nextPosition();
     return;
   }

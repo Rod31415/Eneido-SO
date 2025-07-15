@@ -116,18 +116,18 @@ for(uint32 bus=0;bus<8;bus++){
     for(uint32 device=0;device<32;device++){
       uint32 maxFunctions=PCICheckVendor(bus,device)?8:1;
       for(uint32 functions=0;functions<maxFunctions;functions++){
-        PCIDescriptor* dev;
-        PCIGetDescriptor(dev,bus,device,functions);
+        PCIDescriptor dev;
+        PCIGetDescriptor(&dev,bus,device,functions);
 
-        if(dev->vendor_id==0x0000||dev->vendor_id==0xFFFF)
+        if(dev.vendor_id==0x0000||dev.vendor_id==0xFFFF)
           break;
-        if(dev->header_type&0x7f!=0)
+        if((dev.header_type&0x7f)!=0)
           continue;
 
-        switch(dev->class_id){
+        switch(dev.class_id){
           case Network_Controller:
-          initNics(dev);
-            
+          initNics(&dev);
+            //return;
           break;
         }
 

@@ -10,6 +10,8 @@
 struct PCIGeneralDevice;
 struct PCIDescriptor;
 bool initRtl8139(PCIDescriptor* desc);
+void rtl8139_irq_handler();
+void Rtl8139SendPacket(uint8* MACDest,uint8* buff,uint32 length);
 
 #endif
 

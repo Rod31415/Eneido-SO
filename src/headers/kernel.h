@@ -13,6 +13,7 @@
 #include "vga.h"
 #include "pci.h"
 #include "fat.h"
+#include "rtl8139.h"
 
 
 /*

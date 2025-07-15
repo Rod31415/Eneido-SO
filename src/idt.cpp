@@ -33,6 +33,24 @@ extern "C" void _isr29();
 extern "C" void _isr30();
 extern "C" void _isr31();
 
+
+extern "C" void _irq0();
+extern "C" void _irq1();
+extern "C" void _irq2();
+extern "C" void _irq3();
+extern "C" void _irq4();
+extern "C" void _irq5();
+extern "C" void _irq6();
+extern "C" void _irq7();
+extern "C" void _irq8();
+extern "C" void _irq9();
+extern "C" void _irq10();
+extern "C" void _irq11();
+extern "C" void _irq12();
+extern "C" void _irq13();
+extern "C" void _irq14();
+extern "C" void _irq15();
+
 struct regs
 {
     unsigned int gs, fs, es, ds;      /* pushed the segs last */
@@ -71,9 +89,31 @@ void idt_set_entry(uint8 vector, unsigned long isr, uint8 dpl)
     entry->zero = 0;
 }
 
+void pic_remap(){
+  outport(0x20,0x11);
+  outport(0xa0,0x11);
+  outport(0x21,0x20);
+  outport(0xa1,0x28);
+  outport(0x21,0x04);
+  outport(0xa1,0x02);
+  outport(0x21,0x01);
+  outport(0xa1,0x01);
+  outport(0x21,0x00);
+  outport(0xA1,0x00);
+  
+
+  uint8 mask=inport(0xA1);
+  mask&=~(1<<3);
+  outport(0xA1,mask);
+}
+
+
 void isrs_install();
 
 void idt_install(){
+
+  pic_remap();
+
 _idtptr.limit=(sizeof(struct idt_entry)*256)-1;
 _idtptr.base=(uint32)&idt;
 
@@ -119,6 +159,23 @@ void isrs_install()
     idt_set_entry(29, (unsigned)_isr29, 0x8E);
     idt_set_entry(30, (unsigned)_isr30, 0x8E);
     idt_set_entry(31, (unsigned)_isr31, 0x8E);
+
+    idt_set_entry(32, (unsigned)_irq0, 0x8E);
+    idt_set_entry(33, (unsigned)_irq1, 0x8E);
+    idt_set_entry(34, (unsigned)_irq2, 0x8E);
+    idt_set_entry(35, (unsigned)_irq3, 0x8E);
+    idt_set_entry(36, (unsigned)_irq4, 0x8E);
+    idt_set_entry(37, (unsigned)_irq5, 0x8E);
+    idt_set_entry(38, (unsigned)_irq6, 0x8E);
+    idt_set_entry(39, (unsigned)_irq7, 0x8E);
+    idt_set_entry(40, (unsigned)_irq8, 0x8E);
+    idt_set_entry(41, (unsigned)_irq9, 0x8E);
+    idt_set_entry(42, (unsigned)_irq10, 0x8E);
+    idt_set_entry(43, (unsigned)_irq11, 0x8E);
+    idt_set_entry(44, (unsigned)_irq12, 0x8E);
+    idt_set_entry(45, (unsigned)_irq13, 0x8E);
+    idt_set_entry(46, (unsigned)_irq14, 0x8E);
+    idt_set_entry(47, (unsigned)_irq15, 0x8E);
 }
 
 char *exception_messages[] =
@@ -159,6 +216,8 @@ char *exception_messages[] =
     "Reserved",
     "Reserved"
 };
+
+
 extern "C" void fault_handler(struct regs *r)
 {
   if(r->int_no<32){
@@ -171,4 +230,14 @@ extern "C" void fault_handler(struct regs *r)
   }
   
   }
+
+extern "C" void irq_handler(struct regs *r){
+  if(r->int_no>=32 && r->int_no<=47){
+    if(r->int_no==0x2B){
+      rtl8139_irq_handler();
+    }
+    if(r->int_no>=40) outport(0xA0,0x20);
+    outport(0x20,0x20);
+  }
+}
 

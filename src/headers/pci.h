@@ -118,6 +118,8 @@ enum EnumPCIDeviceClasses{
 
 uint32 PCIReadWord(uint8 bus, uint8 device, uint8 func, uint8 offset);
 void PCIWriteWord(uint8 bus, uint8 device, uint8 func, uint8 offset,uint32 value);
+
+void PCIGetDescriptor(PCIDescriptor *result,uint16 bus,uint16 device,uint16 function);
 void PCIGetGeneralDevice(PCIDescriptor *desc,PCIGeneralDevice* dev);
 
 void PCIBusMastering(PCIDescriptor *desc);

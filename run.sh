@@ -61,4 +61,14 @@ rm bin/interpreter.o
 rm bin/ne2000.o
 rm bin/nics.o
 
-qemu-system-i386 -net nic,model=rtl8139 "ENEIDO.iso"
+sudo ip tuntap add dev tap0 mode tap
+sudo ip link set tap0 up
+
+#qemu-system-i386 -net nic,model=rtl8139 "ENEIDO.iso" -netdev tap,id=net0,ifname=tap0,script=no,downscript=no
+qemu-system-i386 -hda "ENEIDO.iso" \
+  -device rtl8139,netdev=net0 \
+  -netdev tap,id=net0,ifname=tap0,script=no,downscript=no #\
+  #-object filter-dump,id=dump,netdev=net0,file=out.pcap
+
+#wireshark out.pcap
+#sudo tcpdump -i tap0
