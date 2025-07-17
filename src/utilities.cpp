@@ -1,6 +1,5 @@
 #include "headers/utilities.h"
 
-
 void memcpy(uint32 origin, uint32 destiny, uint32 size)
 {
 
@@ -51,5 +50,3 @@ void outportl(uint16 port, uint32 data)
 {
 	__asm__ __volatile__("outl %1, %0" : : "dN"(port), "a"(data));
 }
-
-

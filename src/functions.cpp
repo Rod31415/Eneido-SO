@@ -6,8 +6,8 @@
 #define FontWidth 8
 #define FontHeight 16
 
-#define colsPerRow widthWindow/FontWidth
-#define maxRows heightWindow/FontHeight
+#define colsPerRow widthWindow / FontWidth
+#define maxRows heightWindow / FontHeight
 
 int32 globalColumn = 0, globalRow = 0;
 char actualColor = 0;
@@ -17,13 +17,13 @@ void backspace()
 	if (globalColumn != 0)
 	{
 		globalColumn--;
-    draw_char(globalColumn*FontWidth,globalRow*FontHeight,' ',actualColor);
-      draw_char(globalColumn*FontWidth+FontWidth,globalRow*FontHeight,' ',actualColor);
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, ' ', actualColor);
+		draw_char(globalColumn * FontWidth + FontWidth, globalRow * FontHeight, ' ', actualColor);
 	}
 }
 void scrollDown()
 {
-scrollDOWN(FontHeight,actualColor);
+	scrollDOWN(FontHeight, actualColor);
 }
 
 void sleep()
@@ -33,7 +33,6 @@ void sleep()
 		__asm__ __volatile__("nop");
 	}
 }
-
 
 void nextPosition()
 {
@@ -45,26 +44,27 @@ void nextPosition()
 	}
 };
 
-void resetLine(){
-globalColumn=0;
-
+void resetLine()
+{
+	globalColumn = 0;
 }
 
-void printDec(int32 dec,uint8 s=0)
+void printDec(int32 dec, uint8 s = 0)
 {
 	uint32 digNum = 0;
 	uint32 digits[30];
 	if (dec == 0)
 	{
-    draw_char(globalColumn*FontWidth,globalRow*FontHeight,'0',actualColor);
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, '0', actualColor);
 		nextPosition();
 		return;
 	}
-  uint8 sign=0;
-  if(dec<0&&!s){
-    dec=0U-dec;
-    sign=1;
-  }
+	uint8 sign = 0;
+	if (dec < 0 && !s)
+	{
+		dec = 0U - dec;
+		sign = 1;
+	}
 
 	while (dec)
 	{
@@ -72,42 +72,44 @@ void printDec(int32 dec,uint8 s=0)
 		dec /= 10;
 		digNum++;
 	}
-  if(sign){
-    draw_char(globalColumn*FontWidth,globalRow*FontHeight,'-',actualColor);
-    nextPosition();
-  }
+	if (sign)
+	{
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, '-', actualColor);
+		nextPosition();
+	}
 	for (int32 i = digNum - 1; i >= 0; i--)
 	{
-		draw_char(globalColumn*FontWidth,globalRow*FontHeight,digits[i]+'0',actualColor);
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, digits[i] + '0', actualColor);
 		nextPosition();
 	}
 }
 
-void printHex(uint32 hex,uint8 opt=0)
+void printHex(uint32 hex, uint8 opt = 0)
 {
-  if(opt){
+	if (opt)
+	{
 
-		draw_char(globalColumn*FontWidth,globalRow*FontHeight,(((hex & 0xf0) >> 4 )> 9 ? (((hex & 0xf0) >> 4 )+ 'A' - 10) : (((hex & 0xf0) >> 4) + '0')),actualColor);
-	nextPosition();
-	draw_char(globalColumn*FontWidth,globalRow*FontHeight,((hex & 0x0f) > 9 ? (hex & 0x0f + 'A' - 10) : ((hex & 0x0f) + '0')),actualColor);
-	nextPosition();
-    return;
-  }
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, (((hex & 0xf0) >> 4) > 9 ? (((hex & 0xf0) >> 4) + 'A' - 10) : (((hex & 0xf0) >> 4) + '0')), actualColor);
+		nextPosition();
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, ((hex & 0x0f) > 9 ? (hex & 0x0f + 'A' - 10) : ((hex & 0x0f) + '0')), actualColor);
+		nextPosition();
+		return;
+	}
 
-  uint32 digNum=0;
-  int8 digits[8];
-  while(hex){
-    digits[digNum]=((hex & 0x0f) > 9 ? (hex & 0x0f + 'A' - 10) : ((hex & 0x0f) + '0'));
-    hex>>=4;
-    digNum++;
-  }
-  for(int32 i=digNum-1;i>=0;i--){
-	draw_char(globalColumn*FontWidth,globalRow*FontHeight,digits[i],actualColor);
-  nextPosition();}
-
-  
+	uint32 digNum = 0;
+	int8 digits[8];
+	while (hex)
+	{
+		digits[digNum] = ((hex & 0x0f) > 9 ? (hex & 0x0f + 'A' - 10) : ((hex & 0x0f) + '0'));
+		hex >>= 4;
+		digNum++;
+	}
+	for (int32 i = digNum - 1; i >= 0; i--)
+	{
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, digits[i], actualColor);
+		nextPosition();
+	}
 }
-
 
 void printFlo(float flo)
 {
@@ -118,7 +120,7 @@ void printBin(int32 bin)
 
 	if (bin == 0)
 	{
-    draw_char(globalColumn*FontWidth,globalRow*FontHeight,48,actualColor);
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, 48, actualColor);
 		nextPosition();
 	}
 	int32 ref = 0x80;
@@ -126,23 +128,21 @@ void printBin(int32 bin)
 	{
 		if (bin & ref == ref)
 		{
-    draw_char(globalColumn*FontWidth,globalRow*FontHeight,49,actualColor);
+			draw_char(globalColumn * FontWidth, globalRow * FontHeight, 49, actualColor);
 			nextPosition();
 		}
 		else
 		{
-    draw_char(globalColumn*FontWidth,globalRow*FontHeight,48,actualColor);
+			draw_char(globalColumn * FontWidth, globalRow * FontHeight, 48, actualColor);
 			nextPosition();
 		}
 		ref >>= 1;
 	}
 }
 
-
-
 void printChr(uint32 chr)
 {
-  draw_char(globalColumn*FontWidth,globalRow*FontHeight,(uint8)(chr & 255),actualColor);
+	draw_char(globalColumn * FontWidth, globalRow * FontHeight, (uint8)(chr & 255), actualColor);
 	nextPosition();
 }
 
@@ -173,28 +173,28 @@ void printf(const char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int
 		{
 			if (str[i + 1] == 'd')
 			{
-				printDec(args[argNum],0);
+				printDec(args[argNum], 0);
 				i += 2;
 				argNum++;
 				continue;
 			}
-      if (str[i + 1] == 'u')
+			if (str[i + 1] == 'u')
 			{
-				printDec(args[argNum],1);
+				printDec(args[argNum], 1);
 				i += 2;
 				argNum++;
 				continue;
 			}
 			if (str[i + 1] == 'x')
 			{
-				printHex(args[argNum],1);
+				printHex(args[argNum], 1);
 				i += 2;
 				argNum++;
 				continue;
 			}
-      if (str[i + 1] == 'h')
+			if (str[i + 1] == 'h')
 			{
-				printHex(args[argNum],0);
+				printHex(args[argNum], 0);
 				i += 2;
 				argNum++;
 				continue;
@@ -222,34 +222,34 @@ void printf(const char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int
 				continue;
 			}
 		}
-		else if (str[i] == '/' && str[i + 1] == 'n'||str[i]==13)
+		else if (str[i] == '/' && str[i + 1] == 'n' || str[i] == 13)
 		{
-      draw_char(globalColumn*FontWidth,globalRow*FontHeight,' ',actualColor);
+			draw_char(globalColumn * FontWidth, globalRow * FontHeight, ' ', actualColor);
 			globalColumn = 0;
 			globalRow++;
 			if (globalRow >= maxRows)
 			{
-				globalRow=maxRows-1;
+				globalRow = maxRows - 1;
 				scrollDown();
 			}
 			i += 2;
 			continue;
 		}
-  draw_char(globalColumn*FontWidth,globalRow*FontHeight,(uint8)(str[i] & 255),actualColor);
-	nextPosition();
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, (uint8)(str[i] & 255), actualColor);
+		nextPosition();
 		i++;
 	}
 }
 
-void getConsoleCursorPosition(uint32 *x,uint32 *y){
-*x=globalColumn;
-*y=globalRow;
-
+void getConsoleCursorPosition(uint32 *x, uint32 *y)
+{
+	*x = globalColumn;
+	*y = globalRow;
 }
 
 void cls(uint8 color)
 {
-  clear_screen(actualColor);
+	clear_screen(actualColor);
 
 	globalColumn = 0;
 	globalRow = 0;
@@ -257,13 +257,12 @@ void cls(uint8 color)
 
 void update_cursor(uint32 x, uint32 y)
 {
-  change_ground_color(0);
-	draw_char(x*FontWidth,y*FontHeight,'_',actualColor);
-  change_ground_color(1);
-
+	change_ground_color(0);
+	draw_char(x * FontWidth, y * FontHeight, '_', actualColor);
+	change_ground_color(1);
 }
 
 void putChar(int32 x, int32 y, char character, uint8 color)
 {
-	draw_char(x*FontWidth,y*FontHeight,character,color);
+	draw_char(x * FontWidth, y * FontHeight, character, color);
 }

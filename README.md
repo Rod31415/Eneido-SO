@@ -40,6 +40,9 @@ You can burn the **ENEIDO.iso** file into usb using tools like Rufus or BalenaEt
 ✔️ Global Descriptor Table  
 ✔️ File editor built in  
 ✔️ Snake game  
+✔️ RTL8139 Driver
+✔️ Keyboard Driver
+✔️ IRQs
 
 # Features to do
 ❌ All complex driver  

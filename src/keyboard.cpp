@@ -1,62 +1,66 @@
 #include "headers/keyboard.h"
 
-
 uint8 keyBuffered[20];
-uint8 keyStackBuffer=0;
+uint8 keyStackBuffer = 0;
 uint8 lastKeyBuffered[20];
 uint8 lastAsciiKeyBuffered[20];
 
-
-
-
 uint8 shiftOn = 0;
 
-void initKeyboard(){
-memset((uint32)keyBuffered,0,sizeof(keyBuffered));
-memset((uint32)lastKeyBuffered,0,sizeof(lastKeyBuffered));
-memset((uint32)lastAsciiKeyBuffered,0,sizeof(lastAsciiKeyBuffered));
+void initKeyboard()
+{
+	memset((uint32)keyBuffered, 0, sizeof(keyBuffered));
+	memset((uint32)lastKeyBuffered, 0, sizeof(lastKeyBuffered));
+	memset((uint32)lastAsciiKeyBuffered, 0, sizeof(lastAsciiKeyBuffered));
 }
 
-void eatKeyBuffered(){
-	if(keyStackBuffer>0){
-		for(uint32 i=0;i<keyStackBuffer;i++){
-			lastAsciiKeyBuffered[i]=lastAsciiKeyBuffered[i+1];
-			lastKeyBuffered[i]=lastKeyBuffered[i+1];
+void eatKeyBuffered()
+{
+	if (keyStackBuffer > 0)
+	{
+		for (uint32 i = 0; i < keyStackBuffer; i++)
+		{
+			lastAsciiKeyBuffered[i] = lastAsciiKeyBuffered[i + 1];
+			lastKeyBuffered[i] = lastKeyBuffered[i + 1];
 		}
-		keyBuffered[keyStackBuffer]=false;
+		keyBuffered[keyStackBuffer] = false;
 		keyStackBuffer--;
 	}
 }
 
-uint8 getLastAsciiKey(){
-    return lastAsciiKeyBuffered[0];
+uint8 getLastAsciiKey()
+{
+	return lastAsciiKeyBuffered[0];
 }
 
-uint8 getLastKeyCode(){
-    return lastKeyBuffered[0];
+uint8 getLastKeyCode()
+{
+	return lastKeyBuffered[0];
 }
 
-uint8 isKeyPressed(){
+uint8 isKeyPressed()
+{
 	return keyBuffered[0];
 }
 
 uint8 keyboard_read();
 uint8 getKeyboardKey(uint8 input);
 
-void keyboard_irq_handler(struct regs *r){
+void keyboard_irq_handler(struct regs *r)
+{
 
-    
-    lastKeyBuffered[keyStackBuffer]=keyboard_read();
+	lastKeyBuffered[keyStackBuffer] = keyboard_read();
 	if (lastKeyBuffered[keyStackBuffer] == 42)
 		shiftOn = 1;
 	if (lastKeyBuffered[keyStackBuffer] == 170)
 		shiftOn = 0;
 
-	if(lastKeyBuffered[keyStackBuffer]<128){
-	lastAsciiKeyBuffered[keyStackBuffer]=getKeyboardKey(lastKeyBuffered[keyStackBuffer]);
-	keyBuffered[keyStackBuffer]=true;
-	keyStackBuffer++;}
-
+	if (lastKeyBuffered[keyStackBuffer] < 128)
+	{
+		lastAsciiKeyBuffered[keyStackBuffer] = getKeyboardKey(lastKeyBuffered[keyStackBuffer]);
+		keyBuffered[keyStackBuffer] = true;
+		keyStackBuffer++;
+	}
 }
 
 uint8 keyboard_read()
@@ -65,30 +69,30 @@ uint8 keyboard_read()
 }
 uint8 getKeyboardKey(uint8 input)
 {
-	
+
 	switch (input)
 	{
-  case 27:
-    return (shiftOn) ? '*' : '+';
-    break;
-  case 26:
-    return (shiftOn) ? 126 : 94;
-    break;
-  case 40:
-    return (shiftOn) ? '[' : '{';
-    break;
-  case 43:
-    return (shiftOn) ? ']' : '}';
-    break;
-  case 12:
-    return (shiftOn) ? '?' : 39;
-    break;
-  case 13:
-    return (shiftOn) ? '¡' : '¿';
-    break;
-  case 41:
-    return (shiftOn) ? '°' : '|';
-    break;
+	case 27:
+		return (shiftOn) ? '*' : '+';
+		break;
+	case 26:
+		return (shiftOn) ? 126 : 94;
+		break;
+	case 40:
+		return (shiftOn) ? '[' : '{';
+		break;
+	case 43:
+		return (shiftOn) ? ']' : '}';
+		break;
+	case 12:
+		return (shiftOn) ? '?' : 39;
+		break;
+	case 13:
+		return (shiftOn) ? '¡' : '¿';
+		break;
+	case 41:
+		return (shiftOn) ? '°' : '|';
+		break;
 	case 30:
 		return (shiftOn) ? 'A' : 'a';
 		break;
@@ -209,32 +213,32 @@ uint8 getKeyboardKey(uint8 input)
 	case 53:
 		return (shiftOn) ? '_' : '-';
 		break;
-  case 86:
-    return (shiftOn) ? '>' : '<';
-	case 14://TAB
+	case 86:
+		return (shiftOn) ? '>' : '<';
+	case 14: // TAB
 		return 129;
 		break;
 	case 28:
 		return 128;
 		break;
-	case 80://down
+	case 80: // down
 		return 130;
-    break;
-	case 75://left
+		break;
+	case 75: // left
 		return 131;
-    break;
-	case 72://up
+		break;
+	case 72: // up
 		return 132;
-    break;
-	case 77://right
+		break;
+	case 77: // right
 		return 133;
-    break;
+		break;
 	case 29:
 		return 134;
-    break;
-  case 1:
+		break;
+	case 1:
 		return 135;
-    break;
+		break;
 
 	case 57:
 		return ' ';
