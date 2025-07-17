@@ -141,8 +141,8 @@ printf("Presione ESPACIO para continuar");
 
 refresh();
 
-while(getKeyboardKey(inport(0x60))!=32);
-
+while(getLastAsciiKey()!=32);
+eatKeyBuffered();
   draw_rect(0,0,widthPx,heightPx,0x2f);
   draw_rect(32,32,widthPx-64,heightPx-64,0x02);
 
@@ -151,7 +151,7 @@ while(getKeyboardKey(inport(0x60))!=32);
   gotoxy(width/2-4,0);
   printf("Puntos %d",arrayIndex*10-30);
 
-uint8 ch0,ch1,ch2;
+uint8 ch0;
 uint8 nextDir=3;
 
 xArray[0]=20;
@@ -168,17 +168,16 @@ maxTimeSnake=(arrayIndex<20)?20-arrayIndex:0;
 uint8 first=1;
 while(1){
   timeSnake++;
-  ch1=ch0;
-  ch2=inport(0x60);
-  ch0=getKeyboardKey(ch2);
+  ch0=getLastAsciiKey();
 removeCoords();
 
-if(ch0 != ch1){
+if(isKeyPressed()){
 if(ch0 == escKeyCode){cls(0x00);break;}
 if(ch0 ==  downKeyCode && dir != 2){nextDir=0;}
 else if(ch0 ==  leftKeyCode && dir != 3){nextDir=1;}
 else if(ch0 ==    upKeyCode && dir != 0){nextDir=2;}
 else if(ch0 == rightKeyCode && dir != 1){nextDir=3;}
+eatKeyBuffered();
 }
 if(!GameOver){
   if(timeSnake==maxTimeSnake){
@@ -255,14 +254,14 @@ void (*function[menuMaxGames])(void)={
   wolfensteinINIT
 };
 
-uint8 menuch, l=enterKeyCode,prL;
+uint8 l;
 void gameSelected(){
+  eatKeyBuffered();
   while(1){
-  prL=l;
-  menuch=inport(0x60);
-  l=getKeyboardKey(menuch);
+  l=getLastAsciiKey();
   
-  if(l==prL)continue;
+  if(!isKeyPressed())continue;
+  eatKeyBuffered();
   if(l==escKeyCode)break;
   if(l==enterKeyCode){function[menuSelectedGame]();break;}
 

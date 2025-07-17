@@ -78,7 +78,8 @@ void formatCommand()
   
   for (int j = 0; j < 10; j++)
   {
-      argv[j][0] = 0;
+    for(int i=0;i<80;i++){
+      argv[j][i] = 0;}
   }
   i = 0;
   int a = 0;
@@ -406,19 +407,47 @@ inf(argv[1]);
     new_line_term();
   }
 
-  else if(argc==2 && strcmp(argv[0],"send")==0){
+  else if(argc>=2 && strcmp(argv[0],"send")==0){
+
+    if(strcmp(argv[1],"file")==0){
+      backspace();
+      DIR file=searchFile(argv[2]);
+      if(file.name[0]==0){return;}
+      uint8 buffer[512];
+      memset((uint32)buffer,0,512);
+      file.read(buffer);
+      uint8 mac[6]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+      Rtl8139SendPacket(mac,(uint8*)buffer+4,lenghtStr((int8*)buffer+4));
+
+    }
+    else{
+
     backspace();
     uint8 mac[6]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
     int8 buf[60];
+    memset((uint32)buf,0,60);
     strcpy(buf,argv[1]);
     Rtl8139SendPacket(mac,(uint8*)buf,lenghtStr(buf));
+    new_line_term();
+    }
+  }
+
+  else if(argc==1&& strcmp(argv[0],"mac")==0){
+    backspace();
+    printMAC();
+    new_line_term();
+  }
+  else if(argc==1&& strcmp(argv[0],"recv")==0){
+    backspace();
+    //Rtl8139RecvPacket(0,0);
+    new_line_term();
   }
 
   else
   {
     backspace();
     printf("Uhh me mataste, no tengo el comando ");
-    printf((argv[0]));
+    printf(argv[0]);
     new_line_term();
   }
 
@@ -436,11 +465,9 @@ inf(argv[1]);
 void loop_term()
 {
   
-  character = inport(0x60);
-  ch = s;
-  s = getKeyboardKey(character);
-  if(s == ch)return;
-
+  s = getLastAsciiKey();
+  if(!isKeyPressed())return;
+  eatKeyBuffered();
   if (s == 136){
     
   }

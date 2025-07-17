@@ -27,7 +27,7 @@ uint8 status=inport(0x64);
 
 return (status&1);
 }
-uint8 charac, letter=enter,prevLetter=enter;
+uint8 letter;
 
  uint32 localX=0,localY=0;
 DIR localFile; 
@@ -193,12 +193,13 @@ drawBottom();
 void loopEditor()
 {
 			update_cursor(col+colOffSet, row);
+      eatKeyBuffered();
 	while (1)
 	{
-		charac = inport(0x60);
-	  prevLetter=letter;
-		letter = getKeyboardKey(charac);
-    if(letter==prevLetter){continue;}
+		letter = getLastAsciiKey();
+    if(!isKeyPressed())continue;
+    eatKeyBuffered();
+    
     if (letter == esc){
 
 checkSize();

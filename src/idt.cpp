@@ -78,6 +78,8 @@ struct idt_ptr
 struct idt_entry idt[256]={0};
 struct idt_ptr _idtptr;
 
+
+
 void idt_set_entry(uint8 vector, unsigned long isr, uint8 dpl)
 {
 
@@ -89,41 +91,46 @@ void idt_set_entry(uint8 vector, unsigned long isr, uint8 dpl)
     entry->zero = 0;
 }
 
-void pic_remap(){
-  outport(0x20,0x11);
-  outport(0xa0,0x11);
-  outport(0x21,0x20);
-  outport(0xa1,0x28);
-  outport(0x21,0x04);
-  outport(0xa1,0x02);
-  outport(0x21,0x01);
-  outport(0xa1,0x01);
-  outport(0x21,0x00);
-  outport(0xA1,0x00);
-  
-
-  uint8 mask=inport(0xA1);
-  mask&=~(1<<3);
-  outport(0xA1,mask);
-}
-
-
 void isrs_install();
+void irq_install_handler(int irq, void (*handler)(struct regs *r));
+void irq_uninstall_handler(int irq);
+
+extern "C" void idt_flush(uint32);
 
 void idt_install(){
-
-  pic_remap();
 
 _idtptr.limit=(sizeof(struct idt_entry)*256)-1;
 _idtptr.base=(uint32)&idt;
 
 memset((uint32)&idt,0,sizeof(struct idt_entry)*256);
-isrs_install();
-  __asm__ __volatile__("lidt %0" ::"m"(_idtptr));
 
+ outport(0x20, 0x11);
+  outport(0xA0, 0x11);
+  outport(0x21, 0x20);
+  outport(0xA1, 0x28);
+  outport(0x21, 0x04);
+  outport(0xA1, 0x02);
+  outport(0x21, 0x01);
+  outport(0xA1, 0x01);
+  outport(0x21, 0x00);
+  outport(0xA1, 0x00);
+
+uint8 mask=inport(0xA1);
+mask=~(1<<3);
+outport(0xA1,mask);
+
+//uint8 mask=inport(0x21);
+//mask=~(1<<2);
+//outport(0x21,mask);
+
+  isrs_install();
+
+  irq_install_handler(11,rtl8139_irq_handler);
+  irq_install_handler(1,keyboard_irq_handler);
+  idt_flush((uint32)&_idtptr);
+
+ 
 }
-
-
 
 void isrs_install()
 {
@@ -228,16 +235,38 @@ extern "C" void fault_handler(struct regs *r)
   refresh();
   for(;;);
   }
-  
-  }
+}
+
+void (*irq_routines[16])(struct regs *r)={
+  0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0
+};
+
+void irq_install_handler(int irq, void (*handler)(struct regs* r)){
+
+  irq_routines[irq]=handler;
+
+}
+
+void irq_uninstall_handler(int irq){
+
+  irq_routines[irq]=0;
+
+}
 
 extern "C" void irq_handler(struct regs *r){
-  if(r->int_no>=32 && r->int_no<=47){
-    if(r->int_no==0x2B){
-      rtl8139_irq_handler();
+  void (*handler)(struct regs *r);
+  handler=irq_routines[r->int_no-32];
+
+  //if(r->int_no>33)
+  //printf(" Excepcion n%d/n",r->int_no-32);
+  //  refresh();
+    if(handler){
+      handler(r);
     }
+
     if(r->int_no>=40) outport(0xA0,0x20);
     outport(0x20,0x20);
+  
   }
-}
 

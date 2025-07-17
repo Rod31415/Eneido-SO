@@ -701,15 +701,14 @@ Expr* evaluateNodes(Statement *st,Environment *env){
     }
     else if(uf->subtype==INPUT){
       #define ENTER 128 
-      uint8 ch=ENTER, lastch=ENTER;
-      uint8 code;
+      uint8 ch;
+      eatKeyBuffered();
       uint32 Intindex=0;
       int8 num[32];
       while(1){
-        code=inport(0x60);
-        lastch=ch;
-        ch=getKeyboardKey(code);
-        if(lastch==ch)continue;
+        ch=getLastAsciiKey();
+        if(!isKeyPressed())continue;
+        eatKeyBuffered();
         if(isNumeric(ch)){
           printf("%d",ch-48);
           num[Intindex++]=ch;

@@ -256,112 +256,112 @@ _irq0:
     cli
     push byte 0
     push byte 32
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
 global _irq1
 _irq1:
     cli
     push byte 0
     push byte 33
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq2
 _irq2:
     cli
     push byte 0
     push byte 34
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq3
 _irq3:
     cli
     push byte 0
     push byte 35
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq4
 _irq4:
     cli
     push byte 0
     push byte 36
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq5
 _irq5:
     cli
     push byte 0
     push byte 37
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq6
 _irq6:
     cli
     push byte 0
     push byte 38
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq7
 _irq7:
     cli
     push byte 0
     push byte 39
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq8
 _irq8:
     cli
     push byte 0
     push byte 40
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq9
 _irq9:
     cli
     push byte 0
     push byte 41
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq10
 _irq10:
     cli
     push byte 0
     push byte 42
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq11
 _irq11:
     cli
     push byte 0
     push byte 43
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq12
 _irq12:
     cli
     push byte 0
     push byte 44
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq13
 _irq13:
     cli
     push byte 0
     push byte 45
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq14
 _irq14:
     cli
     push byte 0
     push byte 46
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
     global _irq15
 _irq15:
     cli
     push byte 0
     push byte 47
-    jmp irq_commom_stub
+    jmp irq_common_stub
 
 
 extern fault_handler
@@ -391,7 +391,7 @@ isr_common_stub:
     add esp, 8
     iret
 
-irq_commom_stub:
+irq_common_stub:
     pusha
     push ds
     push es
@@ -413,4 +413,14 @@ irq_commom_stub:
     pop ds
     popa
     add esp, 8
+    sti
     iret
+
+
+global idt_flush
+
+idt_flush:
+    mov eax,[esp+4]
+    lidt [eax]
+    sti
+    ret
