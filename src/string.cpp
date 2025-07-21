@@ -89,6 +89,7 @@ int8 strcpy(int8 *str1, int8 *str2, uint16 size)
 			str1[i] = str2[i];
 		}
 	}
+	return 0;
 }
 
 int8 strcmp(int8 *str1, int8 *str2, uint16 size)

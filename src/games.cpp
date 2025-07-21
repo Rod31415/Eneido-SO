@@ -297,6 +297,7 @@ void wolfensteinINIT()
 }
 float raycast(float angle)
 {
+	return 0.0f;
 }
 
 ////////////////////   HUB   ////////////////////////

@@ -84,14 +84,25 @@ void printDec(int32 dec, uint8 s = 0)
 	}
 }
 
+char nibbleToHexChar(uint8 nibble){
+	nibble&=0x0F;
+	if(nibble<=9){
+		return nibble + '0';
+	}
+	else{
+		return nibble - 10 + 'A';
+	}
+}
+
 void printHex(uint32 hex, uint8 opt = 0)
 {
 	if (opt)
 	{
-
-		draw_char(globalColumn * FontWidth, globalRow * FontHeight, (((hex & 0xf0) >> 4) > 9 ? (((hex & 0xf0) >> 4) + 'A' - 10) : (((hex & 0xf0) >> 4) + '0')), actualColor);
+		char high_char=nibbleToHexChar((hex&0xF0)>>4);
+		char  low_char=nibbleToHexChar(hex&0x0F);
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, high_char, actualColor);
 		nextPosition();
-		draw_char(globalColumn * FontWidth, globalRow * FontHeight, ((hex & 0x0f) > 9 ? (hex & 0x0f + 'A' - 10) : ((hex & 0x0f) + '0')), actualColor);
+		draw_char(globalColumn * FontWidth, globalRow * FontHeight, low_char, actualColor);
 		nextPosition();
 		return;
 	}
@@ -157,7 +168,7 @@ void gotoxy(int32 x, int32 y)
 	globalRow = y;
 }
 
-void printf(const char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int32 arg4)
+void printf(char *str, int32 arg0, int32 arg1, int32 arg2, int32 arg3, int32 arg4)
 {
 	int32 i = 0;
 

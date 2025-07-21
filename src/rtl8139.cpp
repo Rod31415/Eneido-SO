@@ -93,8 +93,7 @@ bool initRtl8139(PCIDescriptor *desc)
 
 	// Software reset
 	outport(actualRTL->iobase + 0x37, 0x10);
-	while (inport(actualRTL->iobase + 0x37) & 0x10)
-		;
+	while (inport(actualRTL->iobase + 0x37) & 0x10);
 
 	// Iniciar el buffer para recibir datos
 	outportl(actualRTL->iobase + 0x30, (uint32)rx_buffer);

@@ -253,9 +253,9 @@ extern "C" void irq_handler(struct regs *r)
 	void (*handler)(struct regs *r);
 	handler = irq_routines[r->int_no - 32];
 
-	// if(r->int_no>33)
-	// printf(" Excepcion n%d/n",r->int_no-32);
-	//   refresh();
+	 if(r->int_no==34)
+	 printf(" Excepcion n%d/n",r->int_no-32);
+	   refresh();
 	if (handler)
 	{
 		handler(r);

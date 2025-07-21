@@ -20,7 +20,7 @@
 };*/
 
 void keyboard_irq_handler(struct regs *r);
-
+void initKeyboard();
 uint8 getLastAsciiKey();
 uint8 getLastKeyCode();
 uint8 isKeyPressed();

@@ -14,10 +14,13 @@ void initFAT(uint8 *buffer)
 	dataCount = localBPB.BPB_TotSec32 - (localBPB.BPB_RsvdSecCnt + (localBPB.BPB_NumFATs * localBPB.BPB_FATSz32));
 	dataCount = dataCount / 2;
 	uint32 FirstRootDirSecNum = localBPB.BPB_RootClus;
+	uint32 dir=localBPB.BPB_RsvdSecCnt+(localBPB.BPB_FATSz32*localBPB.BPB_NumFATs)+localBPB.BPB_RootClus;
+
 
 	printf("FirstDataSector : %u/n", firstDataSector);
 	printf("Count of cluster : %u%u/n", dataCount / 10, dataCount % 10);
 	printf("Entry : %u/n", FirstRootDirSecNum);
+	printf("Directory : %u/n",dir);
 
 	// uint8 firstEntry[512];
 

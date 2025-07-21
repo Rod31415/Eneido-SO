@@ -145,8 +145,9 @@ public:
 
 		return value;
 	}
-	Environment resolve(int8 *varname)
+	Environment* resolve(int8 *varname)
 	{
+		return parent;
 	}
 };
 
@@ -858,8 +859,8 @@ Expr *evaluateNodes(Statement *st, Environment *env)
 		}
 	}
 	refresh();
+	return make_number(0);
 }
-
 uint8 SHOWVARS = 0;
 
 class Parser

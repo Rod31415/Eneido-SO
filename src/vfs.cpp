@@ -97,10 +97,10 @@ int createDirectory(char name[49])
 {
 	uint32 cl = retClusterFree(1);
 	uint32 cs = retClusterFree(32);
-	DIR folder = {"", 2, 1, (uint32)(cs / 8), cs % 8, 0, 0};
+	DIR folder = {"", 2, 1, (uint32)(cs / 8), (uint8)(cs % 8), 0, 0};
 	strcpy(folder.name, name);
-	writeDirectory(folder, (uint32)(cl / 8), cl % 8);
-	DIR reg = {"..", 3, 1, actualClusterDIR, actualDirectoryDIR, 0, 0};
+	writeDirectory(folder, (uint32)(cl / 8), (uint8)(cl % 8));
+	DIR reg = {"..", 3, 1, actualClusterDIR, (uint8)actualDirectoryDIR, 0, 0};
 	writeDirectory(reg, (uint32)(cs / 8), cs % 8);
 
 	uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
@@ -130,6 +130,7 @@ int createDirectory(char name[49])
 
 	actualClusterDIR = aux1;
 	actualDirectoryDIR = aux2;
+	return 1;
 }
 // int createDirectory
 //
@@ -151,13 +152,14 @@ int modifyFile(char name[49], DIR File)
 	} while (actualClusterDIR != 0);
 	actualClusterDIR = aux1;
 	actualDirectoryDIR = aux2;
+	return 1;
 }
 
 int createFile(char name[49])
 {
 	uint32 cl = retClusterFree(1);
 	uint32 cs = retClusterFree(64);
-	DIR folder = {"", 1, 10, (uint32)(cs / 8), cs % 8, 0, 0};
+	DIR folder = {"", 1, 10, (uint32)(cs / 8), (uint8)(cs % 8), 0, 0};
 	strcpy(folder.name, name);
 	writeDirectory(folder, (uint32)(cl / 8), cl % 8);
 	DIR data = {".", 10, 1, 0, 0, 0, 0};
@@ -190,6 +192,7 @@ int createFile(char name[49])
 
 	actualClusterDIR = aux1;
 	actualDirectoryDIR = aux2;
+	return 1;
 }
 
 DIR searchFile(char *name)

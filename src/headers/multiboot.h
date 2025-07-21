@@ -50,4 +50,12 @@ struct vbe_mode_info_struct{
   uint16 off_screen_mem_size;
 }__attribute__((packed));
 
+typedef struct module_info{
+    uint32 mod_start;
+	uint32 mod_end;
+	uint32 str;
+	uint32 reserved;
+}__attribute__((packed))module_info_t;
+
+
 #endif 

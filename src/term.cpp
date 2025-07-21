@@ -6,6 +6,9 @@ uint16 actualLine = 0;
 int8 linesHistory[200][80];
 uint32 flags, memLow, memHigh, sect;
 
+module_info *modules;
+
+
 int8 EneidoTitleString[8][80] = {
 		"                               ,,        ,,                                  ",
 		"                               db      `7MM                                  ",
@@ -57,6 +60,11 @@ void init_term(multiboot_info *mb)
 		memLow = mboot->mem_lower;
 		memHigh = mboot->mem_upper;
 		sect = mboot->mods_count;
+
+		if(mboot->mods_count>0){
+		modules= (module_info*)mboot->mods_addr;
+	}
+
 	}
 	cls(0x00);
 	first = 1;
@@ -131,7 +139,7 @@ void echo()
 	{
 		(argv[1][i] == '"') ? argv[1][i] = ' ' : 0;
 	}
-	printf((argc == 2) ? argv[1] : "ERROR : Escribe un mensaje despues del comando");
+	printf((char*)((argc == 2) ? argv[1] : "ERROR : Escribe un mensaje despues del comando"));
 	new_line_term();
 }
 
@@ -158,6 +166,10 @@ void help()
 	printf("   date                       - Muestra la fecha y hora actual/n");
 	printf("   pci                        - Muestra los dispositivos PCI/n");
 	printf("   doen                       - Ejecuta el interprete de DOEN/n");
+	printf("   send 'file' <a|archivo>    - Envia el argumento o archivo por la red local/n");
+	printf("   recv                       - Recibe el ultimo paquete enviato por la red local/n");
+	printf("   mac                        - Mustra la direccion MAC/n");
+	printf("   elf <archivo>              - Enlaza y ejecuta programas en base a un archivo elf /n");
 	changeColor(0x0f);
 	new_line_term();
 }
@@ -223,7 +235,7 @@ void inf(char *name)
 	printf("Nombre: ");
 	printf(file.name);
 	printf("/nBanderas: %d = ", file.flags);
-	printf((file.flags == 1) ? "Archivo" : ((file.flags == 2) ? "Directorio" : "Retorno"));
+	printf((char*)((file.flags == 1) ? "Archivo" : ((file.flags == 2) ? "Directorio" : "Retorno")));
 	printf("/nTamanio: %d clusters", file.size);
 	printf("/nPrimer Cluster: %d ", file.dataCluster);
 	printf("/nPrimer Direccion: %d ", file.dataDirection);
@@ -489,6 +501,11 @@ void detectCommands()
 	{
 		backspace();
 		// Rtl8139RecvPacket(0,0);
+		new_line_term();
+	}
+	else if (argc == 2 && strcmp(argv[0], "elf") ==0){
+		uint32 nmod=toInt(argv[1]);
+		ElfLoadObjectFile(modules[nmod].mod_start);
 		new_line_term();
 	}
 

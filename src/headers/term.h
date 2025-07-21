@@ -13,6 +13,7 @@
 #include "pci.h"
 #include "interpreter.h"
 #include "nics.h"
+#include "elf.h"
 
 void init_term(multiboot_info *mboot);
 void new_line_term();

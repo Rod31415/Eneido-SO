@@ -28,9 +28,9 @@ void gdt_install()
 	gp.base = (uint32)&gdt;
 	gdt_set_gate(0, 0, 0, 0, 0);
 
-	gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
+	gdt_set_gate(1, 0, 0xFFFFF, 0x9A, 0xCF);
 
-	gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
+	gdt_set_gate(2, 0, 0xFFFFF, 0x92, 0xCF);
 
 	gdt_flush(&gp);
 }
