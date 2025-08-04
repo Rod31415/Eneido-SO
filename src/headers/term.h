@@ -14,8 +14,12 @@
 #include "interpreter.h"
 #include "nics.h"
 #include "elf.h"
+#include "image.h"
+#include "render.h"
+#include "colors.h"
+#include "mouse.h"
 
-void init_term(multiboot_info *mboot);
+void init_term(multiboot_info *mb);
 void new_line_term();
 void loop_term();
 #endif

@@ -813,7 +813,7 @@ Expr *evaluateNodes(Statement *st, Environment *env)
 			while (1)
 			{
 	ch = getLastAsciiKey();
-	if (!isKeyPressed())
+	if (!isKeyBuffered())
 		continue;
 	eatKeyBuffered();
 	if (isNumeric(ch))
@@ -1185,7 +1185,7 @@ void initInterpreterByFile(DIR file, uint8 opt1, uint8 opt2)
 
 	int8 buffer[512];
 	memset((uint32)buffer, 0, 512);
-	file.read((uint8 *)buffer);
+	//file.read((uint8 *)buffer);
 	tokenIndex = 0;
 
 	Lexer(buffer + 4);

@@ -1,5 +1,14 @@
 #include "headers/utilities.h"
 
+void memcpy32(uint32 origin, uint32 destiny, uint32 size)
+{
+
+	for (uint32 i = 0; i < size; i++)
+	{
+		*(uint32 *)(destiny + i*4) = *(uint32 *)(origin + i*4);
+	}
+}
+
 void memcpy(uint32 origin, uint32 destiny, uint32 size)
 {
 

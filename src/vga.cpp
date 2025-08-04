@@ -396,9 +396,9 @@ uint32 HEIGHT = 0;
 
 void refresh();
 
-uint8 backbuffer[widthWindow * heightWindow];
+uint32 backbuffer[widthWindow * heightWindow];
 uint8 changed[widthWindow * heightWindow];
-volatile uint8 *VGA_address = (volatile uint8 *)0xA0000;
+volatile uint32 *VGA_address = (volatile uint32 *)0xA0000;
 
 uint8 CHANGE_GROUND_COLOR = 1;
 
@@ -430,151 +430,45 @@ void scrollUP(uint32 dist)
   }
   */
 }
+#define maxIndex WIDTH*HEIGHT
 
-void set_plane(uint8 plane)
-{
-  outport(0x3c4, 0x02);
-  outport(0x3c5, 1 << (plane & 3));
+
+uint32 get_pixel(uint32 x,uint32 y){
+  uint32 i = y * WIDTH + x;
+    if (i > maxIndex)
+      return 0;
+  return backbuffer[i];
 }
 
-void draw_pixel(uint32 x, uint32 y, uint8 color)
+void draw_pixel(uint32 x, uint32 y, uint32 color)
 {
-  if (mode == 12)
-  {
-    uint32 index = y * (640 / 8) + (x / 8);
-    uint8 bitmask = masks[x % 8];
-
-    for (uint8 plane = 0; plane < 4; ++plane)
-    {
-      set_plane(plane);
-      if (color & (1 << plane))
-      {
-	VGA_address[index] |= bitmask;
-      }
-      else
-      {
-	VGA_address[index] &= ~bitmask;
-      }
-    }
-  }
-  else if (mode == 13)
-  {
+ 
     uint32 i = y * WIDTH + x;
-    if (i > WIDTH * HEIGHT)
+    if (i > maxIndex)
       return;
     changed[i] = 1;
     backbuffer[i] = color;
-  }
+
 }
 
-void clear_screen(uint8 color)
+void clear_screen(uint32 color)
 {
-  if (mode == 12)
-  {
-
-    for (uint8 plane = 0; plane < 4; ++plane)
-    {
-      set_plane(plane);
-      // uint8 fill = (color & (1 << plane)) ? 0xFF : 0x00;
-      for (uint32 i = 0; i < 38400; ++i)
-      {
-      }
-    }
-  }
-  else if (mode == 13)
-  {
+  
     for (uint32 y = 0; y < HEIGHT; y++)
       for (uint32 x = 0; x < WIDTH; x++)
-	backbuffer[WIDTH * y + x] = VGA_address[WIDTH * y + x] = 0x00;
-  }
+	backbuffer[WIDTH * y + x] = VGA_address[WIDTH * y + x] = color;
+  
 }
 
 //////// SFC - Simple Forms Rendering ///////////////////////
 
-void lineLow(int32 x0, int32 y0, int32 x1, int32 y1, uint8 color)
-{
-  int32 dx = x1 - x0;
-  int32 dy = y1 - y0;
-  int32 yi = 1;
-  if (dy < 0)
-  {
-    yi = -1;
-    dy = -dy;
-  }
-  int32 D = (2 * dy) - dx;
-  int32 y = y0;
-  for (int32 x = x0; x < x1; x++)
-  {
-    draw_pixel(x, y, color);
-    if (D > 0)
-    {
-      y = y + yi;
-      D = D + (2 * (dy - dx));
-    }
-    else
-    {
-      D = D + 2 * dy;
-    }
-  }
-}
 
-void lineHigh(int32 x0, int32 y0, int32 x1, int32 y1, uint8 color)
-{
-  int32 dx = x1 - x0;
-  int32 dy = y1 - y0;
-  int32 xi = 1;
-  if (dx < 0)
-  {
-    xi = -1;
-    dx = -dx;
-  }
-  int32 D = (2 * dx) - dy;
-  int32 x = x0;
-  for (int32 y = y0; y < y1; y++)
-  {
-    draw_pixel(x, y, color);
-    if (D > 0)
-    {
-      x = x + xi;
-      D = D + (2 * (dx - dy));
-    }
-    else
-    {
-      D = D + 2 * dx;
-    }
-  }
-}
 
-int32 mathAbs(int32 n)
-{
-  return (n < 0) ? -n : n;
-}
-
-void draw_line(int32 x0, int32 y0, int32 x1, int32 y1, uint8 color)
-{
-  if (mathAbs(y1 - y0) < mathAbs(x1 - x0))
-  {
-    if (x0 > x1)
-      lineLow(x1, y1, x0, y0, color);
-    else
-      lineLow(x0, y0, x1, y1, color);
-  }
-  else
-  {
-    if (y0 > y1)
-      lineHigh(x1, y1, x0, y0, color);
-    else
-      lineHigh(x0, y0, x1, y1, color);
-  }
-}
-
-void draw_rect(uint32 x, uint32 y, uint32 width, uint32 height, uint8 color)
+void draw_rect(uint32 x, uint32 y, uint32 width, uint32 height, uint32 color)
 {
   for (uint32 hI = 0; hI < height; hI++)
   {
     uint32 i = (y + hI) * WIDTH + x;
-    if (i + width > WIDTH * HEIGHT)
-      return;
     for (uint32 wI = 0; wI < width; wI++)
     {
       changed[i + wI] = 1;
@@ -583,12 +477,37 @@ void draw_rect(uint32 x, uint32 y, uint32 width, uint32 height, uint8 color)
   }
 }
 
+void changePalette(uint32 paletteAddress,bool array){
+
+
+outport(0x3C8,0);
+
+if(!array){
+  Palette8bits* p=(Palette8bits*)paletteAddress;
+for(uint32 i=0;i<256;i++){
+outport(0x3C9,p->Colors[i].Blue/4);
+outport(0x3C9,p->Colors[i].Green/4);
+outport(0x3C9,p->Colors[i].Red/4);
+}}
+else{
+uint8 *p=(uint8*)paletteAddress;
+  for(uint32 i=0;i<256;i++){
+    uint8* col=(uint8*)p[i];
+outport(0x3C9,col[0]);
+outport(0x3C9,col[1]);
+outport(0x3C9,col[2]);
+} 
+}
+
+
+}
+
 void change_ground_color(uint8 change)
 {
   CHANGE_GROUND_COLOR = change;
 }
 
-void draw_char(uint32 x, uint32 y, uint8 ch, uint8 color)
+void draw_char(uint32 x, uint32 y, uint8 ch, uint32 color)
 {
   uint8 *glyph = Fonts + (ch * 8);
   uint8 selected = ch % 2;
@@ -614,22 +533,33 @@ void draw_char(uint32 x, uint32 y, uint8 ch, uint8 color)
 ///
 void refresh()
 {
-
+__asm__ __volatile__("cli");
   uint32 x, y;
   for (y = 0; y < HEIGHT; y++)
     for (x = 0; x < WIDTH; x++)
     {
-      int i = WIDTH * y + x;
+      int i = (WIDTH * y + x);
       if (changed[i])
       {
 	VGA_address[i] = backbuffer[i];
 	changed[i] = 0;
       }
     }
+    __asm__ __volatile__("sti");
 }
-void initVGA(uint8 *fb, uint32 width, uint32 height)
+void refresh_rect(uint32 posx,uint32 posy,uint32 width,uint32 height)
 {
-  VGA_address = (volatile uint8 *)fb;
+  __asm__ __volatile__("cli");
+  for (uint32 y = 0; y < height; y++){
+    uint32 offset=(y+posy)*WIDTH+posx;
+    memcpy32((uint32)&backbuffer[offset],(uint32)&VGA_address[offset],width);
+}
+    __asm__ __volatile__("sti");
+}
+
+void initVGA(uint32 *fb, uint32 width, uint32 height)
+{
+  VGA_address = (volatile uint32 *)fb;
 
   mode = 13;
   WIDTH = width;

@@ -1,313 +1,273 @@
 #include "headers/vfs.h"
 
-#define STARTCLUSTER 0x400000
-#define STARTDATACLUSTER 0x410000
-
+#define STARTCLUSTER  0x400000
+#define STARTDATA     0x1400000
+/*
 #define MAXDIRECTIONS 4096
-#define CLUSTERSIZE 512
+
 #define MAXCLUSTERFILE 16
 #define MAXCLUSTERFILESYSTEM 16384
 
 #define DIRPERCLUSTER 8
 
 #define FIRSTDATACLUSTER 512
+*/
+#define SECTORSIZE 512
+#define CLUSTERSIZE 8
+#define BYTSPERCLUS SECTORSIZE*CLUSTERSIZE
+#define MAXCLUSTERS 0x1000000
 
-FILESYSTEM filesystem;
+
+//#define DEBUG
+
 
 uint32 actualClusterDIR = 0;
 uint32 actualDirectoryDIR = 0;
 
 DIR root;
+typedef uint32 CLUSTER;
+typedef uint32 ENTRY;
 
-void writeDirectory(DIR buffer, uint32 cluster, uint32 directory)
-{
-	for (uint32 i = 0; i < 49; i++)
-		*(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + i) = buffer.name[i];
-	*(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 49) = buffer.flags;
-	*(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 50) = buffer.size;
-	*(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 54) = buffer.dataCluster;
-	*(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 58) = buffer.dataDirection;
-	*(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 59) = buffer.nextCluster;
-	*(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 63) = buffer.nextDirection;
-}
-void writeCluster(uint8 *buffer, uint32 cluster)
-{
-	for (uint32 i = 0; i < 512; i++)
-		*(uint8 *)(STARTDATACLUSTER + cluster * CLUSTERSIZE + i) = buffer[i];
-}
-void readDirectory(DIR *buffer, uint32 cluster, uint32 directory)
-{
-	for (uint32 i = 0; i < 49; i++)
-		buffer->name[i] = *(int8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + i);
-	buffer->flags = *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 49);
-	buffer->size = *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 50);
-	buffer->dataCluster = *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 54);
-	buffer->dataDirection = *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 58);
-	buffer->nextCluster = *(uint32 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 59);
-	buffer->nextDirection = *(uint8 *)(STARTCLUSTER + cluster * CLUSTERSIZE + directory * 64 + 63);
-}
-void readCluster(uint8 *buffer, uint32 cluster)
-{
-	for (uint32 i = 0; i < 512; i++)
-		buffer[i] = *(uint8 *)(STARTDATACLUSTER + cluster * CLUSTERSIZE + i);
+#define COMBINE_WORD(msb,lsb) (((uint32)(msb)<<16)|lsb)
+
+void initVFS(){
+
 }
 
-void initVFS()
-{
+void readDirectoryFromN(uint8* buffer, ENTRY N, CLUSTER P){
 
-	filesystem.directions = (uint32)STARTCLUSTER;
-	filesystem.clusters = (uint32)STARTDATACLUSTER;
-	root.name[0] = '.';
-	root.flags = 2;
-	root.size = 0;
-	root.dataCluster = 1;
-	root.dataDirection = 0;
-	root.nextCluster = 0;
-	root.nextDirection = 0;
-	writeDirectory(root, 0, 0);
-
-	DIR file = {"Juegos", 2, 1, 20, 0, 0, 0};
-	writeDirectory(file, 1, 0);
-	file = {"..", 3, 1, 1, 0, 20, 1};
-	writeDirectory(file, 20, 0);
-
-	file = {"snake.exe", 1, 1, 65, 0, 0, 0};
-	writeDirectory(file, 20, 1);
-
-	actualClusterDIR = root.dataCluster;
-	actualDirectoryDIR = 0;
 }
 
-uint32 retClusterFree(uint32 in)
-{
-	DIR ref;
-	for (uint32 x = in; x < 512; x++)
-	{
-		for (uint32 i = 0; i < 8; i++)
-		{
-			readDirectory(&ref, x, i);
-			if (ref.flags == 0)
-	return x * 8 + i;
+
+void* getClusterEntryFromP(CLUSTER P){
+return (void*)(STARTCLUSTER+P*4);
+}
+
+void freeCluster(CLUSTER P){
+	*(uint32*)getClusterEntryFromP(P)=0xFFFFFFFF;
+}
+
+void freeDirectoryEntry(CLUSTER P){
+	
+	for(uint32 i=0;i<BYTSPERCLUS;i+=32){
+		((uint8*)i)[0]=0;
+	}
+}
+
+void prepareClusters(){
+	for(uint32 i=0;i<MAXCLUSTERS;i++){
+		freeCluster(i);
+		//freeDirectoryEntry(i);
+	}
+}
+
+
+CLUSTER getNextCluster(CLUSTER P){
+	return *(uint32*)getClusterEntryFromP(P);
+}
+
+CLUSTER findFirstCluster(CLUSTER startP=0){
+	for(CLUSTER i=startP;i<MAXCLUSTERS;i++){
+		if(getNextCluster(i)==0xFFFFFFFF)
+			return i;
+	}
+	return 0xFFFFFFFF;
+}
+
+void assignCluster(CLUSTER P, CLUSTER pointer){
+*((uint32*)getClusterEntryFromP(P))=pointer;
+#ifdef DEBUG
+printf("Cluster asignado :%d /n",*((uint32*)getClusterEntryFromP(P)));
+#endif
+}
+
+CLUSTER assignNewClustersFreeFile(int32 size){
+
+CLUSTER freeCluster=findFirstCluster();
+CLUSTER retCluster=freeCluster;
+	for(int32 i=0;i<size-1;i++){
+		CLUSTER nextCluster=findFirstCluster(freeCluster+1);
+		assignCluster(freeCluster,nextCluster);
+		freeCluster=nextCluster;		
+	}
+	assignCluster(freeCluster,0xFFFFFFF0);
+	return retCluster;
+}
+
+void assignNewClustersFullFile(CLUSTER P,uint32 size){
+CLUSTER freeCluster=P;
+CLUSTER aux;
+	do{
+		aux=freeCluster;
+		freeCluster=getNextCluster(freeCluster);
+	}while(freeCluster!=0xFFFFFFF0);
+	freeCluster=aux;
+	for(uint32 i=0;i<size;i++){
+		CLUSTER nextCluster=findFirstCluster(freeCluster+1);
+		assignCluster(freeCluster,nextCluster);
+		freeCluster=nextCluster;		
+	}
+	
+}
+
+void* getClusterDataFromP(CLUSTER P){
+return (void*)(STARTDATA+P*BYTSPERCLUS);
+}
+
+uint32 searchFreeEntry(CLUSTER P){
+	for(uint32 i=0;i<BYTSPERCLUS;i+=32){
+		DIR aux=(DIR)(getClusterDataFromP(P)+i);
+		#ifdef DEBUG
+		printf("Entry :%d/n",aux->Name[0]);
+		#endif
+		if((uint8)aux->Name[0]==0xFF || aux->Name[0]==0xE5){
+			#ifdef DEBUG
+			printf("Entry vacia encontrada en : %d/n",(i>>5));
+			#endif
+			return (i>>5);
 		}
 	}
-	return 0;
 }
 
-int createDirectory(char name[49])
-{
-	uint32 cl = retClusterFree(1);
-	uint32 cs = retClusterFree(32);
-	DIR folder = {"", 2, 1, (uint32)(cs / 8), (uint8)(cs % 8), 0, 0};
-	strcpy(folder.name, name);
-	writeDirectory(folder, (uint32)(cl / 8), (uint8)(cl % 8));
-	DIR reg = {"..", 3, 1, actualClusterDIR, (uint8)actualDirectoryDIR, 0, 0};
-	writeDirectory(reg, (uint32)(cs / 8), cs % 8);
+DIR assignDirectoryOnEntryN(CLUSTER P,ENTRY N,DIR entryDir){
+	uint32 address=(uint32)(getClusterDataFromP(P)+(N<<5));
+	#ifdef DEBUG
+	printf("assigment in addr: %d - %d - %d/n",address,P,N);
+	#endif
+memcpy((uint32)entryDir,address,32);
+return (DIR)address;
+}
 
-	uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
+void assignNewDirectoryEntry(DIR directory,DIR entryDir){
+	
+CLUSTER point=assignNewClustersFreeFile(entryDir->FileSize);
+entryDir->FstClusHI=(point>>16)&0xFFFF;
+entryDir->FstClusLO=(point&0xFFFF);
+#ifdef DEBUG
+printf("CLUSTER ENCONTRADO %d/n",COMBINE_WORD(directory->FstClusHI,directory->FstClusLO));
+#endif
+uint32 e=searchFreeEntry(COMBINE_WORD(directory->FstClusHI,directory->FstClusLO));
 
-	uint32 ax, ay;
-	DIR actualDir = {};
-	int i = 0;
-	do
-	{
-		ax = actualDir.nextCluster;
-		ay = actualDir.nextDirection;
-		readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
+ assignDirectoryOnEntryN(COMBINE_WORD(directory->FstClusHI,directory->FstClusLO),e,entryDir);
+}
 
-		actualClusterDIR = actualDir.nextCluster;
-		actualDirectoryDIR = actualDir.nextDirection;
-		i++;
-	} while (actualClusterDIR != 0);
+DIR seeDirectoryEntry(CLUSTER P, ENTRY N){ 
+       return (DIR)(getClusterDataFromP(P)+(N<<5));
+}
 
-	actualDir.nextCluster = (uint32)(cl / 8);
-	actualDir.nextDirection = cl % 8;
-	if (i == 1)
-	{
-		ax = aux1;
-		ay = aux2;
+void seeDirectoriesOnClusterP(CLUSTER P,uint32 stack){
+	for(uint32 i=0;i<CLUSTERSIZE*16;i++){
+		DIR f=seeDirectoryEntry(P,i);
+		if((uint8)f->Name[0]==0xFF)break;
+		for(uint32 i=0;i<stack;i++)
+		printf("   ");
+		printf(f->Name);
+		printf("/n");
+		if(f->Attr==0x10&&f->Name[0]!='.'){
+			seeDirectoriesOnClusterP(COMBINE_WORD(f->FstClusHI,f->FstClusLO),stack+1);
+		}
 	}
-	writeDirectory(actualDir, ax, ay);
-
-	actualClusterDIR = aux1;
-	actualDirectoryDIR = aux2;
-	return 1;
 }
-// int createDirectory
-//
-int modifyFile(char name[49], DIR File)
-{
-	uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
-	DIR actualDir = {};
-	do
-	{
-		readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
 
-		if (strcmp(actualDir.name, name) == 0)
-		{
-			writeDirectory(File, actualClusterDIR, actualDirectoryDIR);
+void seeAllVFSFromClusterP(CLUSTER P){
+	for(uint32 i=0;i<CLUSTERSIZE*16;i++){
+		DIR f=seeDirectoryEntry(P,i);
+		if((uint8)f->Name[0]==0xFF)break;
+		printf(f->Name);
+		printf("/n");
+		if(f->Attr==0x10&&f->Name[0]!='.'){
+			P=COMBINE_WORD(f->FstClusHI,f->FstClusLO);
 		}
-		actualClusterDIR = actualDir.nextCluster;
-		actualDirectoryDIR = actualDir.nextDirection;
-
-	} while (actualClusterDIR != 0);
-	actualClusterDIR = aux1;
-	actualDirectoryDIR = aux2;
-	return 1;
-}
-
-int createFile(char name[49])
-{
-	uint32 cl = retClusterFree(1);
-	uint32 cs = retClusterFree(64);
-	DIR folder = {"", 1, 10, (uint32)(cs / 8), (uint8)(cs % 8), 0, 0};
-	strcpy(folder.name, name);
-	writeDirectory(folder, (uint32)(cl / 8), cl % 8);
-	DIR data = {".", 10, 1, 0, 0, 0, 0};
-	writeDirectory(folder, (uint32)(cs / 8), cs % 8);
-
-	uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
-
-	uint32 ax, ay;
-	DIR actualDir = {};
-	int i = 0;
-	do
-	{
-		ax = actualDir.nextCluster;
-		ay = actualDir.nextDirection;
-		readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
-
-		actualClusterDIR = actualDir.nextCluster;
-		actualDirectoryDIR = actualDir.nextDirection;
-		i++;
-	} while (actualClusterDIR != 0);
-
-	actualDir.nextCluster = (uint32)(cl / 8);
-	actualDir.nextDirection = cl % 8;
-	if (i == 1)
-	{
-		ax = aux1;
-		ay = aux2;
 	}
-	writeDirectory(actualDir, ax, ay);
-
-	actualClusterDIR = aux1;
-	actualDirectoryDIR = aux2;
-	return 1;
 }
 
-DIR searchFile(char *name)
-{
-	int a = 0;
-	uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
-	DIR actualDir = {};
-	do
-	{
-		readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
 
-		actualClusterDIR = actualDir.nextCluster;
-		actualDirectoryDIR = actualDir.nextDirection;
-		if (strcmp(actualDir.name, name) == 0 && actualDir.flags == 1)
-		{
-			actualClusterDIR = aux1;
-			actualDirectoryDIR = aux2;
-			return actualDir;
-		}
-	} while (actualClusterDIR != 0);
-	actualClusterDIR = aux1;
-	actualDirectoryDIR = aux2;
-	printf("No se encontro el archivo");
-	actualDir.name[0] = 0;
-	return actualDir;
+DIR createNewFile(DIR directory,char* name,uint32 fileSize){
+	DIR newDir;
+		newDir->Attr=0x20;
+		strcpy(newDir->Name,name,11);
+		newDir->FileSize=fileSize;
+		assignNewDirectoryEntry(directory,newDir);
 }
 
-int readFiles()
-{
-	DIR actualDir = {};
-	int i = 0;
-	uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
-	do
-	{
-		i++;
-		readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
-		actualClusterDIR = actualDir.nextCluster;
-		actualDirectoryDIR = actualDir.nextDirection;
-		if (i != 1)
-			printf("/n");
-		changeColor(actualDir.flags == 1 ? 0x0f : 0x03);
-		printf("-");
-		printf(actualDir.name);
-	} while (actualClusterDIR != 0);
-	actualClusterDIR = aux1;
-	actualDirectoryDIR = aux2;
-	return i;
+DIR createNewDirectory(DIR directory,char* name,uint32 fileSize){
+	DIR newDir;
+		newDir->Attr=0x10;
+		strcpy(newDir->Name,name,11);
+		newDir->FileSize=fileSize;
+	
+		DirectoryStruct returnDir;
+
+		assignNewDirectoryEntry(directory,newDir);
+		returnDir.Attr=0x10;
+		strcpy(returnDir.Name,"..         ",11);
+		returnDir.FileSize=0;
+		returnDir.FstClusHI=directory->FstClusHI;
+		returnDir.FstClusLO=directory->FstClusLO;
+		assignDirectoryOnEntryN(COMBINE_WORD(newDir->FstClusHI,newDir->FstClusLO),0,&returnDir);
+		
 }
 
-int treeFileSystem()
-{
-	DIR actualDir = {};
-	int i = 0;
-	int stack = 1;
-
-	uint32 stackCluster[100], stackDirectory[100];
-	uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
-	uint32 max1 = actualClusterDIR, max2 = actualDirectoryDIR;
-	do
-	{
-		i++;
-		readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
-		actualClusterDIR = actualDir.nextCluster;
-		actualDirectoryDIR = actualDir.nextDirection;
-		if (i != 1)
-			printf("/n");
-		changeColor(actualDir.flags == 1 ? 0x0f : 0x03);
-		for (int p = 0; p < stack; p++)
-			printf("-");
-		printf(actualDir.name);
-		if (actualDir.flags == 2)
-		{
-			stackCluster[stack] = max1;
-			stackDirectory[stack] = max2;
-
-			changeDirectory(actualDir.name);
-			stack++;
-		}
-		if (actualClusterDIR == 0 && max1 != aux1 && max2 != aux2)
-		{
-		}
-
-	} while (actualClusterDIR != 0);
-	actualClusterDIR = aux1;
-	actualDirectoryDIR = aux2;
-	return i;
-}
-
-int changeDirectory(char *name)
-{
-	int a = 0;
-	uint32 aux1 = actualClusterDIR, aux2 = actualDirectoryDIR;
-	DIR actualDir = {};
-	do
-	{
-		readDirectory(&actualDir, actualClusterDIR, actualDirectoryDIR);
-
-		actualClusterDIR = actualDir.nextCluster;
-		actualDirectoryDIR = actualDir.nextDirection;
-		if (strcmp(actualDir.name, name, 0) == 0 && actualDir.flags > 1)
-		{
-			a = a | 1;
-			actualClusterDIR = actualDir.dataCluster;
-			actualDirectoryDIR = actualDir.dataDirection;
-			break;
-		}
-		else
-		{
-			a = a | 0;
-		}
-	} while (actualClusterDIR != 0);
-	if (a == 0)
-	{
-		actualClusterDIR = aux1;
-		actualDirectoryDIR = aux2;
+DIR getDirectoryEntryByName(DIR directory,char* name){
+for(uint32 i=0;i<CLUSTERSIZE*16;i++){
+		DIR f=seeDirectoryEntry(COMBINE_WORD(directory->FstClusHI,directory->FstClusLO),i);
+		if((uint8)f->Name[0]==0xFF)break;
+		if(strcmp(f->Name,name,11)==0)return f;
 	}
-	return a;
+	return directory;
+}
+
+void seeClusterEntries(){
+	for(uint32 i=0;i<16;i++){
+		printf("%d ",*(uint32*)getClusterEntryFromP(i));
+	}
+}
+
+DIR GlobalDir;
+void initRootDirectory(){
+	prepareClusters();
+	DIR rootDIRaddress,root;
+	strcpy(root->Name,".          ",11);
+	root->Attr=0x10;
+	root->FstClusHI=0;
+	root->FstClusLO=0;
+	root->FileSize=0;
+	rootDIRaddress=root;
+	DIR dot;
+	memcpy((uint32)root,(uint32)dot,32);
+	assignNewDirectoryEntry(root,dot);
+
+	strcpy(dot->Name,"..         ",11);
+	assignNewDirectoryEntry(root,dot);
+
+	createNewFile(root,"LEEME   TXT",1);
+	//seeDirectoriesOnClusterP(0,0);
+
+	GlobalDir=root;
+}
+
+
+POSFILE GlobalPos=0;
+
+FILE* fopen(char* filename){
+ return getDirectoryEntryByName(GlobalDir,filename);
+}
+
+
+
+void fputs(char* data, FILE* f){
+uint32 lenght=lenghtStr(data);
+char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO))+GlobalPos);
+strcpy(fptr,data,lenght);
+GlobalPos+=lenght;
+}
+
+void fgets(char* data, uint32 lenght, FILE* f){
+char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO))+GlobalPos);
+strcpy(data,fptr,lenght);
+GlobalPos+=lenght;
+}
+
+void fseek(POSFILE point,FILE* f){
+	GlobalPos=point;
 }

@@ -45,7 +45,7 @@ void printMAC()
 
 bool isRtl8139(PCIDescriptor *desc)
 {
-	if (desc->vendor_id == 0x10EC && desc->device_id == 0x8139)
+	if (desc->vendor_id == 0x10EC && (desc->device_id == 0x8139 || desc->device_id == 0x8136))
 		return true;
 	return false;
 }
@@ -75,7 +75,7 @@ bool initRtl8139(PCIDescriptor *desc)
 {
 	if (!isRtl8139(desc))
 	{
-		printf("TODO MAL/n");
+		//printf("TODO MAL/n");
 		return false;
 	}
 
@@ -102,7 +102,7 @@ bool initRtl8139(PCIDescriptor *desc)
 
 	outportw(actualRTL->iobase + 0x3c, 0x0005);
 
-	// outportw(actualRTL->iobase+0x3e,0xFFFF);
+	 outportw(actualRTL->iobase+0x3e,0xFFFF);
 
 	// Pa configurar el buffer
 	outportl(actualRTL->iobase + 0x44, 0xf | (1 << 7) | (1 << 4));

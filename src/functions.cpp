@@ -10,7 +10,7 @@
 #define maxRows heightWindow / FontHeight
 
 int32 globalColumn = 0, globalRow = 0;
-char actualColor = 0;
+uint32 actualColor = 0;
 
 void backspace()
 {
@@ -26,13 +26,7 @@ void scrollDown()
 	scrollDOWN(FontHeight, actualColor);
 }
 
-void sleep()
-{
-	for (int i = 0; i < 1000000; i++)
-	{
-		__asm__ __volatile__("nop");
-	}
-}
+
 
 void nextPosition()
 {
@@ -157,7 +151,7 @@ void printChr(uint32 chr)
 	nextPosition();
 }
 
-void changeColor(uint8 color)
+void changeColor(uint32 color)
 {
 	actualColor = color;
 }
@@ -258,9 +252,9 @@ void getConsoleCursorPosition(uint32 *x, uint32 *y)
 	*y = globalRow;
 }
 
-void cls(uint8 color)
+void cls(uint32 color)
 {
-	clear_screen(actualColor);
+	clear_screen(color);
 
 	globalColumn = 0;
 	globalRow = 0;

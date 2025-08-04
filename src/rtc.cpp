@@ -27,8 +27,7 @@ uint32 time()
 void readRTC(datetime *dt)
 {
 
-	while (update_flagRTC())
-		;
+	while (update_flagRTC());
 
 	uint8 sec = get_registerRTC(0x00);
 	uint8 min = get_registerRTC(0x02);

@@ -5,8 +5,7 @@
 #include "vga.h"
 
 
-void sleep();
-void cls(uint8 color);
+void cls(uint32 color);
 void backspace();
 void update_cursor(uint32 x, uint32 y);
 /*                                          */
@@ -22,7 +21,7 @@ void printf(char* str, int32 arg0=0, int32 arg1=0, int32 arg2=0, int32 arg3=0, i
 void scanf(char* str, int32 arg0=0, int32 arg1=0, int32 arg2=0, int32 arg3=0, int32 arg4=0);
 
 
-void changeColor(uint8 color);
+void changeColor(uint32 color);
 void gotoxy(int32 x,int32 y);
 void resetTTYScreen();
 void getConsoleCursorPosition(uint32 *x,uint32 *y);

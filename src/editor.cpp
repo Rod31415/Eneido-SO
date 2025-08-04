@@ -29,30 +29,30 @@ bool kbhit()
 uint8 letter;
 
 uint32 localX = 0, localY = 0;
-DIR localFile;
+FILE* localFile;
 
 void drawSide()
 {
-	draw_rect(0, 0, 16, height * 16, 0x1c);
-	changeColor(0x00);
-	change_ground_color(0);
+	draw_rect(0, 0, 16, height * 16, COLOR_LIGHT_GRAY);
+	changeColor(COLOR_BLACK);
+	change_ground_color(false);
 	for (uint32 i = 0; i <= height - 1; i++)
 	{
-		draw_rect(0, i * 16, 16, 16, 0x01c);
+		draw_rect(0, i * 16, 16, 16, COLOR_LIGHT_GRAY);
 		gotoxy((i < 10) ? 1 : 0, i);
 		printf("%d", i);
 	}
-	changeColor(0x0f);
+	changeColor(COLOR_WHITE);
 	change_ground_color(1);
 }
 void drawBottom()
 {
-	draw_rect(0, (height - 1) * 16 + 8, width * 8, 24, 0x0f);
-	change_ground_color(0);
-	changeColor(0x00);
+	draw_rect(0, (height - 1) * 16 + 8, width * 8, 24, COLOR_WHITE);
+	change_ground_color(false);
+	changeColor(COLOR_BLACK);
 	gotoxy(1, 29);
 	printf("FILE:");
-	printf(localFile.name);
+	printf(localFile->Name);
 	gotoxy(36, 29);
 	printf("EDITOR");
 	gotoxy(62, 29);
@@ -60,10 +60,10 @@ void drawBottom()
 	change_ground_color(1);
 	refresh();
 	gotoxy(2, 0);
-	changeColor(0x0f);
+	changeColor(COLOR_WHITE);
 }
-
-void initEditor(DIR file)
+char buff[5 * 512 * 8];
+void initEditor(char* filename)
 {
 
 	col = 0;
@@ -76,16 +76,14 @@ void initEditor(DIR file)
 			lineStr[i][j] = 0;
 		}
 	}
-	localFile = file;
-	cls(0x00);
-	uint8 buff[localFile.size * 512];
-	for (uint32 i = 0; i < localFile.size; i++)
-	{
-		readCluster(&buff[i * 512], localFile.dataCluster * 8 + localFile.dataDirection + i);
-	}
+
+	localFile=fopen(filename);
+	cls(COLOR_BLACK);
+	
+	fgets(buff,sizeof(buff),localFile);
 	uint32 rowIndex = 0, colIndex = 0;
-	maxRowsInFile = *(buff);
-	for (uint32 u = 4; u < localFile.size * 512; u++)
+
+	for (uint32 u = 0; u < localFile->FileSize * 512*8; u++)
 	{
 
 		if (buff[u] == 13)
@@ -95,10 +93,11 @@ void initEditor(DIR file)
 			rowIndex++;
 			u++;
 		}
-		lineStr[rowIndex][colIndex] = (int8)buff[u];
+		if(buff[u]==0)break;
+		lineStr[rowIndex][colIndex] = (char)buff[u];
 		colIndex++;
 	}
-	changeColor(0x0f);
+	changeColor(COLOR_WHITE);
 	for (uint32 i = 0; i < height; i++)
 	{
 		gotoxy(colOffSet, i);
@@ -147,8 +146,8 @@ void checkSize()
 			break;
 		}
 	}
-	localFile.size = (uint32)(size / 512) + 1;
-	modifyFile(localFile.name, localFile);
+	//localFile.size = (uint32)(size / 512) + 1;
+	//modifyFile(localFile.name, localFile);
 }
 
 void refreshMaxFileRows()
@@ -220,24 +219,21 @@ void loopEditor()
 	while (1)
 	{
 		letter = getLastAsciiKey();
-		if (!isKeyPressed())
+		if (!isKeyBuffered())
 			continue;
 		eatKeyBuffered();
 
 		if (letter == esc)
 		{
 
-			checkSize();
-			uint8 buff[localFile.size * 512];
-			memset((uint32)buff, 0, localFile.size * 512);
-			uint32 rowIndex = 0, colIndex = 0;
-			*(buff) = maxRowsInFile;
-			for (uint32 u = 4; u < localFile.size * 512; u++)
+			uint32 rowIndex=0,colIndex=0;
+			uint32 u;
+			for (u = 0; u < localFile->FileSize * 512*8; u++)
 			{
 
 	if (lineStr[rowIndex][colIndex] == 0)
 	{
-		if (rowIndex == maxRowsInFile)
+		if (rowIndex == maxRowsInFile|| lineStr[0][colIndex+1] == 0)
 		{
 			break;
 		}
@@ -252,9 +248,8 @@ void loopEditor()
 	buff[u] = (uint8)lineStr[rowIndex][colIndex];
 	colIndex++;
 			}
-			for (uint32 i = 0; i < localFile.size; i++)
-	writeCluster(&buff[i * 512], localFile.dataCluster * 8 + localFile.dataDirection + i);
-
+			buff[u+1]=0;
+			fputs(buff,localFile);
 			break;
 		}
 		uint32 lgtStr = lenghtStr(lineStr[row]);

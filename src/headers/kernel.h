@@ -17,7 +17,8 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "elf.h"
-
+#include "render.h"
+#include "colors.h"
 
 
 #endif

@@ -129,7 +129,7 @@ void passCoords(uint8 nextDir)
 	{
 		arrayIndex++;
 		newFoodCoord();
-		draw_rect(0, 0, widthPx, 32, 0x2f);
+		draw_rect(0, 0, widthPx, 32, COLOR_WHITE);
 		gotoxy(width / 2 - 4, 0);
 		printf("Puntos %d", arrayIndex * 10 - 30);
 	}
@@ -137,14 +137,14 @@ void passCoords(uint8 nextDir)
 
 void printFood()
 {
-	draw_rect(xFood * 16, yFood * 16, 16, 16, 0x04);
+	draw_rect(xFood * 16, yFood * 16, 16, 16, COLOR_DARK_BLUE);
 }
 
 void printCoords()
 {
 	for (uint32 i = 0; i < arrayIndex + 1; i++)
 	{
-		draw_rect(xArray[i] * 16, yArray[i] * 16, 16, 16, 0x01);
+		draw_rect(xArray[i] * 16, yArray[i] * 16, 16, 16, COLOR_DARK_RED);
 	}
 }
 
@@ -152,7 +152,7 @@ void removeCoords()
 {
 	for (uint32 i = 0; i < arrayIndex + 1; i++)
 	{
-		draw_rect(xArray[i] * 16, yArray[i] * 16, 16, 16, 0x02);
+		draw_rect(xArray[i] * 16, yArray[i] * 16, 16, 16, COLOR_DARK_GREEN);
 	}
 }
 
@@ -166,10 +166,10 @@ void snakeINIT()
 	GameOver = 0;
 	xFood = 10;
 	yFood = 10;
-	cls(0x00);
+	cls(COLOR_BLACK);
 
 	gotoxy(0, 0);
-	changeColor(0x0f);
+	changeColor(COLOR_WHITE);
 	for (uint8 i = 0; i < 7; i++)
 	{
 		gotoxy(13, 9 + i);
@@ -181,13 +181,12 @@ void snakeINIT()
 
 	refresh();
 
-	while (getLastAsciiKey() != 32)
-		;
+	while (getLastAsciiKey() != 32);
 	eatKeyBuffered();
-	draw_rect(0, 0, widthPx, heightPx, 0x2f);
-	draw_rect(32, 32, widthPx - 64, heightPx - 64, 0x02);
+	draw_rect(0, 0, widthPx, heightPx, COLOR_WHITE);
+	draw_rect(32, 32, widthPx - 64, heightPx - 64, COLOR_DARK_GREEN);
 
-	changeColor(0x0);
+	changeColor(COLOR_BLACK);
 	change_ground_color(0);
 	gotoxy(width / 2 - 4, 0);
 	printf("Puntos %d", arrayIndex * 10 - 30);
@@ -212,7 +211,7 @@ void snakeINIT()
 		ch0 = getLastAsciiKey();
 		removeCoords();
 
-		if (isKeyPressed())
+		if (isKeyBuffered())
 		{
 			if (ch0 == escKeyCode)
 			{
@@ -249,11 +248,11 @@ void snakeINIT()
 			}
 			printFood();
 			printCoords();
-			draw_rect(0, 0, 16, 16, 0x2f);
+			draw_rect(0, 0, 16, 16, COLOR_WHITE);
 		}
 		else if (GameOver && first)
 		{
-			draw_rect(widthPx / 2 - 100 - 4 * 8, height / 2 * 16 - 66, 9 * 8 + 200, 16 + 100, 0x2f);
+			draw_rect(widthPx / 2 - 100 - 4 * 8, height / 2 * 16 - 66, 9 * 8 + 200, 16 + 100, COLOR_WHITE);
 			gotoxy(width / 2 - 4, height / 2 - 1);
 			printf("GAME OVER");
 			first = 0;
@@ -264,52 +263,41 @@ void snakeINIT()
 	change_ground_color(1);
 }
 
-void patoINIT()
-{
-}
 /////////////////////////////////////////////////////////////
-float xPl = 2, yPl = 2;
-float anglePl = 0;
+uint32 desY=height/2;
 
-uint8 map[10][10] = {
-		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 1, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-};
+void hardINIT(){
+cls(COLOR_BLACK);
+desY=heightPx/2;
+COORD ballPos={widthPx/2,heightPx/2};
+COORD ballVel={-5,-5};
 
-float raycast(float angle);
-
-void wolfensteinINIT()
-{
-	cls(0x00);
-	for (float line = 0; line < 320; line++)
-	{
-		float dis = raycast(anglePl + line / 320.0);
-		draw_line(line, heightPx / 2 - dis, line, heightPx / 2 + dis, 0x0f);
+draw_rect(5,desY-40,20,80,COLOR_DARK_RED);
+refresh();
+MouseDescriptor mouse;
+while(true){
+	
+	getMouseDescriptor(&mouse);
+	if(mouse.Pos.y!=desY){
+	draw_rect(5,desY-40,20,80,COLOR_BLACK);
+	refresh_rect(5,desY-40,20,80);
+	desY=mouse.Pos.y;
+	draw_rect(5,desY-40,20,80,COLOR_DARK_RED);
+	//refresh();
+	refresh_rect(5,desY-40,20,80);
 	}
-}
-float raycast(float angle)
-{
-	return 0.0f;
+	}
 }
 
 ////////////////////   HUB   ////////////////////////
 
 uint32 menuSelectedGame = 0;
-const uint32 menuMaxGames = 3;
-int8 menuGameNames[menuMaxGames][80] = {"Snake", "Pato, Pata y su pata", "Wolfenstein"};
+const uint32 menuMaxGames = 2;
+int8 menuGameNames[menuMaxGames][80] = {"Snake", "Pong"};
 
 void (*function[menuMaxGames])(void) = {
 		snakeINIT,
-		patoINIT,
-		wolfensteinINIT};
+		hardINIT};
 
 uint8 l;
 void gameSelected()
@@ -319,7 +307,7 @@ void gameSelected()
 	{
 		l = getLastAsciiKey();
 
-		if (!isKeyPressed())
+		if (!isKeyBuffered())
 			continue;
 		eatKeyBuffered();
 		if (l == escKeyCode)
@@ -330,8 +318,8 @@ void gameSelected()
 			break;
 		}
 
-		changeColor(0x03);
-		gotoxy(width / 2 - 10, 7 + menuSelectedGame * 2);
+		changeColor(COLOR_DARK_YELLOW);
+		gotoxy(width / 2 - lenghtStr(menuGameNames[menuSelectedGame])/2, 7 + menuSelectedGame * 2);
 		printf(menuGameNames[menuSelectedGame]);
 
 		if (l == upKeyCode && menuSelectedGame > 0)
@@ -343,8 +331,8 @@ void gameSelected()
 			menuSelectedGame++;
 		}
 
-		changeColor(0x02);
-		gotoxy(width / 2 - 10, 7 + menuSelectedGame * 2);
+		changeColor(COLOR_DARK_GREEN);
+		gotoxy(width / 2 - lenghtStr(menuGameNames[menuSelectedGame])/2, 7 + menuSelectedGame * 2);
 		printf(menuGameNames[menuSelectedGame]);
 		refresh();
 	}
@@ -358,14 +346,14 @@ void initGameHub()
 	changeColor(0x1b);
 	gotoxy(width / 2 - 4, 3);
 	printf("Game-Hub");
-	draw_rect(40, 40, widthPx - 80, heightPx - 80, 0x07);
+	draw_rect(40, 40, widthPx - 80, heightPx - 80, COLOR_LIGHT_GRAY);
 	draw_rect(48, 48, widthPx - 96, heightPx - 96, 0x3f);
 
-	changeColor(0x03);
+	changeColor(COLOR_DARK_YELLOW);
 
 	for (uint32 i = 0; i < menuMaxGames; i++)
 	{
-		gotoxy(width / 2 - 10, 7 + i * 2);
+		gotoxy(width / 2 - lenghtStr(menuGameNames[i])/2, 7 + i * 2);
 		printf(menuGameNames[i]);
 	}
 

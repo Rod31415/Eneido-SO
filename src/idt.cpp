@@ -93,8 +93,29 @@ void irq_uninstall_handler(int irq);
 
 extern "C" void idt_flush(uint32);
 
+void IRQ_set_mask(uint8 IRQline){
+	uint16 port;
+	uint8 value;
+
+	if(IRQline<8){
+		port=0x21;
+	}
+	else{
+		port=0xA1;
+		IRQline-=8;
+	}
+	value = inport(port)&(~(1<<IRQline));
+	outport(port,value);
+}
+
+void wait(){
+        for(volatile int i=0;i<5000;i++);
+}
+
 void idt_install()
 {
+
+        __asm__ __volatile__("cli");
 
 	_idtptr.limit = (sizeof(struct idt_entry) * 256) - 1;
 	_idtptr.base = (uint32)&idt;
@@ -102,28 +123,41 @@ void idt_install()
 	memset((uint32)&idt, 0, sizeof(struct idt_entry) * 256);
 
 	outport(0x20, 0x11);
+        wait();
 	outport(0xA0, 0x11);
+        wait();
+
 	outport(0x21, 0x20);
+        wait();
 	outport(0xA1, 0x28);
+        wait();
+
 	outport(0x21, 0x04);
+        wait();
 	outport(0xA1, 0x02);
+        wait();
+
 	outport(0x21, 0x01);
+        wait();
 	outport(0xA1, 0x01);
-	outport(0x21, 0x00);
-	outport(0xA1, 0x00);
+        wait();
 
-	uint8 mask = inport(0xA1);
-	mask = ~(1 << 3);
-	outport(0xA1, mask);
+	outport(0x21, 0xFF);
+	outport(0xA1, 0xFF);
 
-	// uint8 mask=inport(0x21);
-	// mask=~(1<<2);
-	// outport(0x21,mask);
-
-	isrs_install();
+        isrs_install();
 
 	irq_install_handler(11, rtl8139_irq_handler);
 	irq_install_handler(1, keyboard_irq_handler);
+	irq_install_handler(0,    timer_irq_handler);
+	irq_install_handler(12,   mouse_irq_handler);
+	
+	IRQ_set_mask(0);
+    IRQ_set_mask(1);
+	IRQ_set_mask(2);
+	IRQ_set_mask(11);
+	IRQ_set_mask(12);
+
 	idt_flush((uint32)&_idtptr);
 }
 
@@ -253,8 +287,8 @@ extern "C" void irq_handler(struct regs *r)
 	void (*handler)(struct regs *r);
 	handler = irq_routines[r->int_no - 32];
 
-	 if(r->int_no==34)
-	 printf(" Excepcion n%d/n",r->int_no-32);
+	 //if(r->int_no==34)
+	 //printf(" Excepcion n%d/n",r->int_no-32);
 	   refresh();
 	if (handler)
 	{

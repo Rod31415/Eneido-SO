@@ -6,11 +6,11 @@ void checkDisk()
 	flag = inport(0x1f7);
 	if (flag != 0 && flag != 0xff)
 	{
-		printf("Ata DRIVE found! status : %d", flag);
+		printf("Ata DRIVE found! status : %d/n", flag);
 	}
 	else
 	{
-		printf("Ata drive not found!");
+		printf("Ata drive not found!/n");
 	}
 }
 
@@ -40,8 +40,7 @@ void initDisk()
 void readDiskLBA(uint32 lba, uint8 *buffer)
 {
 
-	while (isBusyDisk())
-		;
+	while (isBusyDisk());
 
 	outport(0x1f6, 0xE0 | ((lba >> 24) & 0x0f));
 	outport(0x1f1, 0);
@@ -54,8 +53,7 @@ void readDiskLBA(uint32 lba, uint8 *buffer)
 	outport(0x1f7, 0x20);
 	// outport(0x3f6,2);
 
-	while (isBusyDisk())
-		;
+	while (isBusyDisk());
 
 	for (uint32 i = 0; i < 256; i++)
 	{
@@ -68,8 +66,7 @@ void readDiskLBA(uint32 lba, uint8 *buffer)
 void writeDiskLBA(uint32 lba, uint8 *buffer)
 {
 
-	while (isBusyDisk())
-		;
+	while (isBusyDisk());
 
 	outport(0x1f6, 0xE0 | ((lba >> 24) & 0x0f));
 	outport(0x1f1, 0);
@@ -82,8 +79,7 @@ void writeDiskLBA(uint32 lba, uint8 *buffer)
 	outport(0x1f7, 0x30);
 	// outport(0x3f6,2);
 
-	while (isBusyDisk())
-		;
+	while (isBusyDisk());
 
 	for (uint32 i = 0; i < 256; i++)
 	{

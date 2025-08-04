@@ -70,27 +70,19 @@ void ElfLoadObjectFile(uint32 base_address){
 		}
 
 		
-
-		/*for(uint32 i=0;i<num_symbols;i++){
-			Elf32_Sym* sm=&symbolTable[i];
-			char* name=stringTable+sm->st_name;
-			if(strcmp(name,"main")==0){*/
 				void* addr=(void*)(sectionbase);
 				typedef int(*func_t)(void);
 
 				func_t call=(func_t)addr;
-
-				//__asm__ __volatile__("movl $0x7c00, %esp");
 				uint32 a=call();
 
-				//printf("Result : %d/n",a);
 				uint8* code=(uint8*)call;
+
 				#ifdef DEBUG
 				for(uint32 i=0;i< textTable->sh_size;i++){
 				printf("%x/",code[i]);}
 				#endif
-		/*	}
-		}*/
+
 
 //#ifdef DEBUG
 		printf("Program Ended -  Returned : %d",a);
@@ -176,29 +168,41 @@ int ret(){
 	int8 num[32];
 	eatKeyBuffered();
 	while (1)
-			{
-	ch = getLastAsciiKey();
-	if (!isKeyPressed())
-		continue;
-	eatKeyBuffered();
-	if (isNumeric(ch))
 	{
-		printf("%c", ch );
-		num[Intindex++] = ch;
-		refresh();
-	}
-	if (ch == ENTER)
-		break;
-	}
-
+	ch = getLastAsciiKey();
+	if (isKeyBuffered()){
+	        
+	        if (isNumeric(ch))
+	        {
+				eatKeyBuffered();
+	        	printf("%c", ch );
+	        	num[Intindex++] = ch;
+	        	refresh();
+	        }
+	        if (ch == ENTER){
+			eatKeyBuffered();
+	        	break;}
+	        }
+        }
+		printf("/n");
 	return toInt(num);
+	
 }
 
+void newsrand(){
+srand(time());
+}
 
+void newsleep(){
+	sleep(10);
+}
 
 struct Function exportedFunction[]={
 	{"_Z6printfPciiiii",(void*)printf},
-	{"_Z5scanfv",(void*)ret}
+	{"_Z5scanfv",(void*)ret},
+	{"_Z4randv",(void*)rand},
+	{"_Z5srandv",(void*)newsrand},
+	{"_Z5sleepv",(void*)newsleep}
 };
 
 

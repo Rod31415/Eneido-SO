@@ -1,22 +1,23 @@
 #ifndef COLORS_H
 #define COLORS_H
 
-#define C_BLACK   0x0
-#define C_BLUE    0x1
-#define C_GREEN   0x2
-#define C_AQUA    0x3
-#define C_RED     0x4
-#define C_PURPLE  0x5
-#define C_YELLOW  0x6
-#define C_WHITE   0x7
-#define C_GRAY    0x8
-#define C_LBLUE   0x9
-#define C_LGREEN  0xA
-#define C_LAQUA   0xB
-#define C_LRED    0xC
-#define C_LPURPLE 0xD
-#define C_LYELLOW 0xE
-#define C_LWHITE  0xF
+#define COLOR_BLACK        0xFF000000 //0x0
+#define COLOR_DARK_RED     0xFFA80000 //0x1
+#define COLOR_DARK_GREEN   0xFF00A800 //0x2
+#define COLOR_DARK_YELLOW  0xFFA8A800 //0x3
+#define COLOR_DARK_BLUE    0xFF0000A8 //0x4
+#define COLOR_DARK_PURPLE  0xFFA800A8 //0x5
+#define COLOR_DARK_CYAN    0xFF0057A8 //0x6
+#define COLOR_LIGHT_GRAY   0xFFA8A8A8 //0x7
+#define COLOR_DARK_GRAY    0xFF575757 //0x8
+#define COLOR_LIGHT_RED    0xFFFF5757 //0x9
+#define COLOR_LIGHT_GREEN  0xFF57FF57 //0xA
+#define COLOR_LIGHT_YELLOW 0xFFFFFF57 //0xB
+#define COLOR_LIGHT_BLUE   0xFF5757FF //0xC
+#define COLOR_LIGHT_PURPLE 0xFFFF57FF //0xD
+#define COLOR_LIGHT_CYAN   0xFF57FFFF //0xE
+#define COLOR_WHITE        0xFFFFFFFF //0xF
+
 
 
 #endif 

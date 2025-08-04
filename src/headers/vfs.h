@@ -3,41 +3,36 @@
 #include "types.h"
 #include "functions.h"
 #include "string.h"
-typedef struct{
-uint32 directions;
-uint32 clusters;
-}__attribute__((packed)) FILESYSTEM;
+#include "utilities.h"
+#include "keyboard.h"
 
-
-void readCluster(uint8 *buffer,uint32 cluster);
-void writeCluster(uint8 buffer[512],uint32 cluster);
 typedef struct{
 
-int8 name[49];
-uint8 flags;
-uint32 size;
-uint32 dataCluster;
-uint8 dataDirection;
-uint32 nextCluster;
-uint8 nextDirection;
-void read(uint8* buffer){
-readCluster(buffer,dataCluster*8+dataDirection);
-  }
-void write(uint8* buffer){
-writeCluster(buffer,dataCluster*8+dataDirection);
-}
+char   Name[11];
+uint8  Attr;
+uint8  NTRes;
+uint8  CrtTimeTenth;
+uint16 CrtTime;
+uint16 CrtDate;
+uint16 LstAccDate;
+uint16 FstClusHI;
+uint16 WrtTime;
+uint16 WrtDate;
+uint16 FstClusLO;
+uint32 FileSize;
 
-}__attribute__((packed)) DIR;
+}__attribute__((packed)) DirectoryStruct;
 
-void initVFS();
-void readDirectory(DIR* buffer,uint32 cluster,uint32 directory);
-void writeDirectory(DIR buffer,uint32 cluster,uint32 directory);
+typedef DirectoryStruct* DIR;
+typedef DirectoryStruct FILE;
+typedef int32 POSFILE;
 
-int readFiles();
-DIR searchFile(char *name);
-int changeDirectory(char *name);
-int createDirectory(char *name);
-int modifyFile(char *name,DIR File);
-int createFile(char *name);
+void initRootDirectory();
 
+
+
+FILE* fopen(char* filename);
+void fputs(char* data, FILE* f);
+void fgets(char* data, uint32 lenght, FILE* f);
+void fseek(int32 point,FILE* f);
 #endif

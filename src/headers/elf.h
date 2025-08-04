@@ -3,6 +3,9 @@
 #include "types.h"
 #include "functions.h"
 #include "string.h"
+#include "math.h"
+#include "rtc.h"
+#include "pit.h"
 
 #define EI_NIDENT 16
 

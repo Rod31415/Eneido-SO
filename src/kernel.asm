@@ -14,7 +14,7 @@ DD 0
 DD 0x0
 DD 640
 DD 480
-DD 8
+DD 32
 
 section .text 
 global start
@@ -35,4 +35,3 @@ section .bss
 stack_bottom:
 resb 16384
 stack_top:
-
