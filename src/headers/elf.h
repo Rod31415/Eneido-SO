@@ -40,6 +40,17 @@ typedef struct Elf32_Shdr{
 }__attribute__((packed))Elf32_Shdr_t;
 
 
+typedef struct Elf32_Phdr{
+uint32 p_type;
+uint32 p_offset;
+uint32 p_vaddr;
+uint32 p_paddr;
+uint32 p_filesz;
+uint32 p_memsz;
+uint32 p_flags;
+uint32 p_align;
+}__attribute__((packed))Elf32_Phdr_t;
+
 typedef struct {
 	uint32	st_name;
 	uint32	st_value;

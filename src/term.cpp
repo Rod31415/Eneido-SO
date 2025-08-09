@@ -240,6 +240,7 @@ void help()
 	printf("   colors                     - Abre una prueba de colores /n");
 	printf("   license                    - Muestra la licencia y creditos del proyecto /n");
 	printf("   ls                         - Lista los archivos del directorio /n");
+	printf("   tree                       - Lista los archivos de todo el FS /n");
 	printf("   cd <directorio>            - Cambia de directorio /n");
 	printf("   mkdir <directorio>         - Crea un directorio /n");
 	printf("   inf <archivo>              - Muestra la informacion del archivo /n");
@@ -247,7 +248,6 @@ void help()
 	printf("   touch <archivo>            - Crea un archivo /n");
 	printf("   edit <archivo> <contenido> - Edita un archivo /n");
 	printf("   edit <archivo>             - Abre el archivo con el editor de texto/n");
-	printf("   clusters                   - Abre la ventana del sistema de archivos /n");
 	printf("   date                       - Muestra la fecha y hora actual/n");
 	printf("   pci                        - Muestra los dispositivos PCI/n");
 	printf("   doen                       - Ejecuta el interprete de DOEN/n");
@@ -255,6 +255,7 @@ void help()
 	printf("   recv                       - Recibe el ultimo paquete enviato por la red local/n");
 	printf("   mac                        - Mustra la direccion MAC/n");
 	printf("   elf <archivo>              - Enlaza y ejecuta programas en base a un archivo elf /n");
+	printf("   view <archivo>             - Muestra imagenes de los modulos de GRUB /n");
 	changeColor(COLOR_WHITE);
 	new_line_term();
 }
@@ -282,10 +283,10 @@ void colors()
 void license()
 {
 	backspace();
-	printf("/n   GNU General Public License v3.0 /n");
-	printf("     Hecho por Rodrigo Bustos /n");
+	printf("/n             MIT License /n");
+	printf("       Hecho por Rodrigo Bustos /n");
 	printf(" Puedes acceder al codigo fuente yendo a :/n");
-	printf("   https://github.com/Rod31415/Eneido-SO/n /n");
+	printf("  https://github.com/Rod31415/Eneido-SO/n /n");
 	new_line_term();
 }
 
@@ -318,19 +319,13 @@ void cat(char *name)
 
 void inf(char *name)
 {
-	/*backspace();
-	DIR file = searchFile(name);
-	if (file.name[0] == 0)
-	{
-		return;
-	}
+	backspace();
+	FILE* file = fopen(name);
+	if(file==(FILE*)-1)return;
 	printf("Nombre: ");
-	printf(file.name);
-	printf("/nBanderas: %d = ", file.flags);
-	printf((char*)((file.flags == 1) ? "Archivo" : ((file.flags == 2) ? "Directorio" : "Retorno")));
-	printf("/nTamanio: %d clusters", file.size);
-	printf("/nPrimer Cluster: %d ", file.dataCluster);
-	printf("/nPrimer Direccion: %d ", file.dataDirection);*/
+	printf(file->Name);
+	printf("/nTamanio: %d/n",file->FileSize);
+	printf("Cluster: %d/n",COMBINE_WORD(file->FstClusHI,file->FstClusLO));
 }
 
 void edit(char *name, char *str)
@@ -350,79 +345,21 @@ void edit(char *name, char *str)
 
 void editor(char *name)
 {
-	/*DIR file = searchFile(name);
-	if (file.name[0] == 0)
-	{
-		return;
-	}
-	initEditor(file);*/
-}
-
-void clusters()
-{
-
-	boolOnTest = 1;
-
-	uint8 color = 0;
-	DIR file;
-	cls(COLOR_BLACK);
-	for (uint32 j = 0; j < 4000; j++)
-	{
-		for (uint32 i = 0; i < 8; i++)
-		{
-			/*readDirectory(&file, j, i);
-			switch (file.flags)
-			{
-			case 0:
-	color = 0;
-	break;
-			case 1:
-	color = 1;
-	break;
-			case 2:
-	color = 2;
-	break;
-			case 3:
-	color = 4;
-	break;
-			case 10:
-	color = 0xf;
-	break;
-			}*/
-			draw_rect(((j * 8 + i) % (widthWindow / 16)) * 16, ((j * 8 + i) / (widthWindow / 16)) * 16, 16, 16, color);
-		}
-	}
-	/*
-		changeColor(0x00);
-		gotoxy(0,23);
-		printf("  %c:Cluster vacio ",219);
-
-		changeColor(0x00);
-		printf("%c",219);
-		changeColor(0x70);
-		printf(":Cluster archivo ");
-
-		changeColor(0x72);
-		printf("%c",219);
-		changeColor(0x70);
-		printf(":Cluster directorio /n");
-		changeColor(0x74);
-
-		printf("  %c",219);
-		changeColor(0x70);
-		printf(":Cluster retorno ");
-		changeColor(0x7f);
-		printf("%c",219);
-		changeColor(0x70);
-		printf(":Cluster datos                  ");*/
+	initEditor(name);
 }
 
 void detectCommands()
 {
+
 	if (argv[0][0] == 0)
 	{
 		return;
 	}
+
+	/*FILE* f=(DIR)-1;//=fopen(argv[0]);
+	if(f!=(DIR)-1){
+		printf("BIEN");
+	}*/
 
 	if (argc == 1 && strcmp(argv[0], "init") == 0)
 	{
@@ -453,29 +390,40 @@ void detectCommands()
 		clear();
 	}
 
+	else if (argc == 1 && strcmp(argv[0],"display")==0){
+		vbe_mode_info_struct *vbe = (vbe_mode_info_struct *)(uint32)mboot->vbe_mode_info;
+		printf("buffer :%h",vbe->framebuffer);
+	}
 	else if (argc == 1 && strcmp(argv[0], "ls") == 0)
 	{
 		backspace();
-		//int h = readFiles();
+		listDirectories();
 		changeColor(COLOR_WHITE);
 		new_line_term();
 	}
 
+	else if (argc == 1 && strcmp(argv[0], "tree") == 0)
+	{
+		backspace();
+		seeAllVFSFromClusterP(0,0);
+		changeColor(COLOR_WHITE);
+		new_line_term();
+	}
 	else if (argc == 2 && argv[1][0] != 0 && strcmp(argv[0], "cd") == 0)
 	{
 
-		/*if (changeDirectory(argv[1]) == 0)
+		if (!changeDirectory(argv[1]))
 		{
 			backspace();
 			printf(" Carpeta no encontrada ");
 			new_line_term();
-		}*/
+		}
 	}
 
 	else if (argc == 2 && strcmp(argv[0], "mkdir") == 0)
 	{
 
-		//createDirectory(argv[1]);
+		fCreateNewDirectory(argv[1]);
 	}
 
 	else if (argc == 2 && strcmp(argv[0], "cat") == 0)
@@ -485,13 +433,14 @@ void detectCommands()
 	}
 	else if (argc == 2 && strcmp(argv[0], "inf") == 0)
 	{
-		//inf(argv[1]);
+		inf(argv[1]);
 		new_line_term();
 	}
 	else if (argc == 2 && strcmp(argv[0], "touch") == 0)
 	{
 
-		//createFile(argv[1]);
+		fCreateNewFile(argv[1]);
+		//FILE* f=fopen(argv[1]);
 	}
 
 	else if (argc == 3 && strcmp(argv[0], "edit") == 0)
@@ -502,11 +451,6 @@ void detectCommands()
 	{
 		editor(argv[1]);
 		init_term(mboot);
-	}
-
-	else if (argc == 1 && strcmp(argv[0], "clusters") == 0)
-	{
-		clusters();
 	}
 
 	else if (argc == 1 && strcmp(argv[0], "games") == 0)
@@ -596,28 +540,34 @@ void detectCommands()
 		new_line_term();
 	}
 	else if (argc == 2 && strcmp(argv[0], "elf") ==0){
-		uint32 nmod=toInt(argv[1]);
 		backspace();
-		if(nmod<cantModules)
-		ElfLoadObjectFile(modules[nmod].mod_start);
-		else{printf("Modulo no encontrado");}
+		FILE* f=fopen(argv[1]);
+
+		if(f==(DIR)-1){return;}
+
+		if(f->Name[8]=='E'&&f->Name[9]=='L'&&f->Name[10]=='F'){
+			ElfLoadObjectFile((uint32)fgetpointer(f));
+		}
+		else{
+			printf("ARCHIVO DE FORMATO NO DISPONIBLE");
+		}
+		
 		new_line_term();
 	}
 	else if (argc == 2 && strcmp(argv[0], "view") ==0){
 		boolOnTest = 1;
-		uint32 nmod;
-		
-		if(isNumeric(argv[1][0]))
-		nmod=toInt(argv[1]);
-		
+
+		FILE* f=fopen(argv[1]);
+
+		if(f==(DIR)-1){return;}
+
+		if(f->Name[8]=='B'&&f->Name[9]=='M'&&f->Name[10]=='P'){
+		initViewer((uint32)fgetpointer(f));
+		}
 		else{
-			nmod=searchModule(argv[1]);
+			printf("ARCHIVO DE FORMATO NO DISPONIBLE");
 		}
 
-		if(nmod<cantModules)
-		initViewer(modules[nmod].mod_start);
-		else{printf("Modulo no encontrado");}
-		//new_line_term();
 	}
 	else if(argc ==1 &&strcmp(argv[0],"mouse")==0){
 		backspace();
@@ -627,9 +577,21 @@ void detectCommands()
 
 	else
 	{
+		//FILE* f=fopendir(retBinDirectory(),argv[0]);
+		FILE* f=fopen(argv[0]);
 		backspace();
+		if(f!=(DIR)-1){
+			char* b=f->Name;
+			if(b[8]=='E'&&b[9]=='X'&&b[10]=='E'){
+			printf("Ejecutando programa...");
+			}
+				
+			
+		}
+		else{
 		printf("Uhh me mataste, no tengo el comando ");
 		printf(argv[0]);
+		}
 		new_line_term();
 	}
 

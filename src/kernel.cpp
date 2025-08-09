@@ -1,6 +1,6 @@
 #include "headers/kernel.h"
 
-
+extern "C" int sys_print(const void *buf, uint32 count);
 
 extern "C" void _main(multiboot_info *mboot)
 {
@@ -26,13 +26,11 @@ vbe_mode_info_struct *vbe = (vbe_mode_info_struct *)(uint32)mboot->vbe_mode_info
 	
 	//initMouse();
 	initKeyboard();
-
-	initRootDirectory();
-	FILE* f=fopen("LEEME   TXT");
 	
-	fputs("HOLA",f);
-	
+	initRootDirectoryWithModules(mboot);
 
+	//refresh();
+	//while(1){}
   init_term(mboot);
 	while (1)
 	{

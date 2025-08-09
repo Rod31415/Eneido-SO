@@ -1,7 +1,10 @@
 #include "headers/vfs.h"
-
-#define STARTCLUSTER  0x400000
-#define STARTDATA     0x1400000
+#define BEFOREFRAMEBUFFER 0xD000000
+#define AFTERFRAMEBUFFER 0xD12C000
+#define GOODPLACEMENT 0x1000000
+#define STARTCLUSTER  GOODPLACEMENT
+//					  0xD000000
+#define STARTDATA     GOODPLACEMENT+0x2000
 /*
 #define MAXDIRECTIONS 4096
 
@@ -13,9 +16,9 @@
 #define FIRSTDATACLUSTER 512
 */
 #define SECTORSIZE 512
-#define CLUSTERSIZE 8
-#define BYTSPERCLUS SECTORSIZE*CLUSTERSIZE
-#define MAXCLUSTERS 0x1000000
+#define CLUSTERSIZE 4
+#define BYTSPERCLUS 2048
+#define MAXCLUSTERS 0x200000
 
 
 //#define DEBUG
@@ -25,19 +28,9 @@ uint32 actualClusterDIR = 0;
 uint32 actualDirectoryDIR = 0;
 
 DIR root;
-typedef uint32 CLUSTER;
-typedef uint32 ENTRY;
+
 
 #define COMBINE_WORD(msb,lsb) (((uint32)(msb)<<16)|lsb)
-
-void initVFS(){
-
-}
-
-void readDirectoryFromN(uint8* buffer, ENTRY N, CLUSTER P){
-
-}
-
 
 void* getClusterEntryFromP(CLUSTER P){
 return (void*)(STARTCLUSTER+P*4);
@@ -90,6 +83,9 @@ CLUSTER retCluster=freeCluster;
 		assignCluster(freeCluster,nextCluster);
 		freeCluster=nextCluster;		
 	}
+	#ifdef DEBUG
+	printf("Primer cluster libre: %d/n",freeCluster);
+	#endif
 	assignCluster(freeCluster,0xFFFFFFF0);
 	return retCluster;
 }
@@ -118,7 +114,7 @@ uint32 searchFreeEntry(CLUSTER P){
 	for(uint32 i=0;i<BYTSPERCLUS;i+=32){
 		DIR aux=(DIR)(getClusterDataFromP(P)+i);
 		#ifdef DEBUG
-		printf("Entry :%d/n",aux->Name[0]);
+		printf("Entry :%d/n",(i>>5));
 		#endif
 		if((uint8)aux->Name[0]==0xFF || aux->Name[0]==0xE5){
 			#ifdef DEBUG
@@ -138,7 +134,7 @@ memcpy((uint32)entryDir,address,32);
 return (DIR)address;
 }
 
-void assignNewDirectoryEntry(DIR directory,DIR entryDir){
+DIR assignNewDirectoryEntry(DIR directory,DIR entryDir){
 	
 CLUSTER point=assignNewClustersFreeFile(entryDir->FileSize);
 entryDir->FstClusHI=(point>>16)&0xFFFF;
@@ -148,14 +144,23 @@ printf("CLUSTER ENCONTRADO %d/n",COMBINE_WORD(directory->FstClusHI,directory->Fs
 #endif
 uint32 e=searchFreeEntry(COMBINE_WORD(directory->FstClusHI,directory->FstClusLO));
 
- assignDirectoryOnEntryN(COMBINE_WORD(directory->FstClusHI,directory->FstClusLO),e,entryDir);
+ return assignDirectoryOnEntryN(COMBINE_WORD(directory->FstClusHI,directory->FstClusLO),e,entryDir);
 }
 
 DIR seeDirectoryEntry(CLUSTER P, ENTRY N){ 
        return (DIR)(getClusterDataFromP(P)+(N<<5));
 }
 
-void seeDirectoriesOnClusterP(CLUSTER P,uint32 stack){
+void seeDirectoriesOnClusterP(CLUSTER P){
+	for(uint32 i=0;i<CLUSTERSIZE*16;i++){
+		DIR f=seeDirectoryEntry(P,i);
+		if((uint8)f->Name[0]==0xFF)break;
+		printf(f->Name);
+		printf("/n");
+	}
+}
+
+void seeAllVFSFromClusterP(CLUSTER P,uint32 stack){
 	for(uint32 i=0;i<CLUSTERSIZE*16;i++){
 		DIR f=seeDirectoryEntry(P,i);
 		if((uint8)f->Name[0]==0xFF)break;
@@ -164,19 +169,7 @@ void seeDirectoriesOnClusterP(CLUSTER P,uint32 stack){
 		printf(f->Name);
 		printf("/n");
 		if(f->Attr==0x10&&f->Name[0]!='.'){
-			seeDirectoriesOnClusterP(COMBINE_WORD(f->FstClusHI,f->FstClusLO),stack+1);
-		}
-	}
-}
-
-void seeAllVFSFromClusterP(CLUSTER P){
-	for(uint32 i=0;i<CLUSTERSIZE*16;i++){
-		DIR f=seeDirectoryEntry(P,i);
-		if((uint8)f->Name[0]==0xFF)break;
-		printf(f->Name);
-		printf("/n");
-		if(f->Attr==0x10&&f->Name[0]!='.'){
-			P=COMBINE_WORD(f->FstClusHI,f->FstClusLO);
+			seeAllVFSFromClusterP(COMBINE_WORD(f->FstClusHI,f->FstClusLO),stack+1);
 		}
 	}
 }
@@ -187,7 +180,7 @@ DIR createNewFile(DIR directory,char* name,uint32 fileSize){
 		newDir->Attr=0x20;
 		strcpy(newDir->Name,name,11);
 		newDir->FileSize=fileSize;
-		assignNewDirectoryEntry(directory,newDir);
+		return assignNewDirectoryEntry(directory,newDir);
 }
 
 DIR createNewDirectory(DIR directory,char* name,uint32 fileSize){
@@ -204,9 +197,56 @@ DIR createNewDirectory(DIR directory,char* name,uint32 fileSize){
 		returnDir.FileSize=0;
 		returnDir.FstClusHI=directory->FstClusHI;
 		returnDir.FstClusLO=directory->FstClusLO;
-		assignDirectoryOnEntryN(COMBINE_WORD(newDir->FstClusHI,newDir->FstClusLO),0,&returnDir);
+		strcpy(newDir->Name,".          ",11);
+		assignDirectoryOnEntryN(COMBINE_WORD(newDir->FstClusHI,newDir->FstClusLO),0,newDir);
+		assignDirectoryOnEntryN(COMBINE_WORD(newDir->FstClusHI,newDir->FstClusLO),1,&returnDir);
+		strcpy(newDir->Name,name,11);
+		return newDir;
 		
 }
+char parsename[12];
+char* parseFATnames(char* filename){
+
+uint32 index=0;
+bool ret=false;
+
+if(filename[0]=='.'){parsename[0]='.';index++;ret=true;}
+if(filename[0]=='.'&&filename[1]=='.'){parsename[0]='.';parsename[1]='.';index++;ret=true;}
+
+if(ret){
+	while(index<11){
+					parsename[index]=' ';
+					index++;
+				}
+}
+else
+for(uint32 i=0;i<11;i++){
+		
+		if(filename[i]==0){
+			while(index<11){
+					parsename[index]=' ';
+					index++;
+				}
+				break;
+		}
+        if(filename[i]=='.'){
+				while(index<8){
+					parsename[index]=' ';
+					index++;
+				}
+        }
+        else if(filename[i]>'Z'){
+        parsename[index]=filename[i]-32;
+		index++;
+        }
+        else{parsename[index]=filename[i];
+		index++;}
+}
+parsename[11]=0;
+
+return parsename;
+}
+
 
 DIR getDirectoryEntryByName(DIR directory,char* name){
 for(uint32 i=0;i<CLUSTERSIZE*16;i++){
@@ -214,8 +254,10 @@ for(uint32 i=0;i<CLUSTERSIZE*16;i++){
 		if((uint8)f->Name[0]==0xFF)break;
 		if(strcmp(f->Name,name,11)==0)return f;
 	}
-	return directory;
+	return (DIR)-1;
 }
+
+
 
 void seeClusterEntries(){
 	for(uint32 i=0;i<16;i++){
@@ -224,7 +266,47 @@ void seeClusterEntries(){
 }
 
 DIR GlobalDir;
-void initRootDirectory(){
+DIR BinDirGlobal;
+
+bool isBMP(void* start){
+char *buf=(char*)start;
+	if(buf[0]=='B'&&buf[1]=='M'){
+		return true;
+	}
+	return false;
+}
+bool isELF(void* start){
+	char *buf=(char*)start;
+	if(buf[1]=='E'&&buf[2]=='L'&&buf[3]=='F'){
+		return true;
+	}
+	return false;
+}
+uint32 imagesN=0;
+uint32 elfN=0;
+void createModulesFiles(DIR root,void* start,uint32 size){
+	char img[11]="img";
+	char exe[11]="file";
+
+	if(isBMP(start)){
+		imagesN++;
+		char bmp[6]={imagesN+48,'.','B','M','P',0};
+		strcpy(img+3,bmp,6);
+		DIR f=createNewFile(root, parseFATnames(img),size/BYTSPERCLUS+1);
+		char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
+		memcpy((uint32)start,(uint32)fptr,size);
+	}
+	if(isELF(start)){
+		elfN++;
+		char elf[6]={elfN+48,'.','E','L','F',0};
+		strcpy(exe+4,elf,6);
+		DIR f=createNewFile(root,parseFATnames(exe),size/BYTSPERCLUS+1);
+		char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
+		memcpy((uint32)start,(uint32)fptr,size);
+	}
+}
+
+void initRootDirectoryWithModules(multiboot_info *mb){
 	prepareClusters();
 	DIR rootDIRaddress,root;
 	strcpy(root->Name,".          ",11);
@@ -241,19 +323,76 @@ void initRootDirectory(){
 	assignNewDirectoryEntry(root,dot);
 
 	createNewFile(root,"LEEME   TXT",1);
+
+	
+	FILE* f=getDirectoryEntryByName(root,"LEEME   TXT");
+	char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
+	char data[50]={'A','B','C',13,'C',0};
+	memcpy((uint32)data,(uint32)fptr,6);
+	
+	createNewDirectory(root,          "BIN        ",1);
+	root=getDirectoryEntryByName(root,parseFATnames("bin"));
+	BinDirGlobal=root;
+	createNewFile(root,"LS         ",1);
+	createNewFile(root,"TOUCH      ",1);
+	//root=getDirectoryEntryByName(root,parseFATnames(".."));
+
+	module_info* md=(module_info*)mb->mods_addr;
+	for(uint32 i=0;i<mb->mods_count;i++){
+		createModulesFiles(root,(void*)md[i].mod_start,(md[i].mod_end-md[i].mod_start));
+		
+	}
 	//seeDirectoriesOnClusterP(0,0);
 
 	GlobalDir=root;
 }
 
+DIR retBinDirectory(){
+return BinDirGlobal;
+}
+
+void listDirectories(){
+	seeDirectoriesOnClusterP(COMBINE_WORD(GlobalDir->FstClusHI,GlobalDir->FstClusLO));
+}
+
+bool changeDirectory(char* str){
+	DIR auxDir;
+	auxDir=getDirectoryEntryByName(GlobalDir,parseFATnames(str));
+	if(auxDir==(DIR)-1||auxDir->Attr!=0x10)return false;
+	if(str[0]=='.'&&str[1]=='.'){
+		auxDir=seeDirectoryEntry(COMBINE_WORD(auxDir->FstClusHI,auxDir->FstClusLO),0);
+	}
+	GlobalDir=auxDir;
+	return true;
+}
+
+FILE* fCreateNewDirectory(char* str){
+	return createNewDirectory(GlobalDir,parseFATnames(str),1);
+}
+
+FILE* fCreateNewFile(char* str){
+	return createNewFile(GlobalDir,parseFATnames(str),1);
+}
 
 POSFILE GlobalPos=0;
 
 FILE* fopen(char* filename){
- return getDirectoryEntryByName(GlobalDir,filename);
+	GlobalPos=0;
+	char auxFilename[12];
+	memcpy((uint32)parseFATnames(filename),(uint32)auxFilename,12);
+ 	FILE* f=getDirectoryEntryByName(GlobalDir,auxFilename);
+	if(f==(DIR)-1){
+		fCreateNewFile(filename);
+	}
+	return f;
 }
 
-
+FILE* fopendir(DIR directory,char* filename){
+	GlobalPos=0;
+	
+	memcpy((uint32)parseFATnames(filename),(uint32)filename,12);
+ return getDirectoryEntryByName(GlobalDir,filename);
+}
 
 void fputs(char* data, FILE* f){
 uint32 lenght=lenghtStr(data);
@@ -266,6 +405,10 @@ void fgets(char* data, uint32 lenght, FILE* f){
 char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO))+GlobalPos);
 strcpy(data,fptr,lenght);
 GlobalPos+=lenght;
+}
+
+void* fgetpointer(FILE* f){
+return (void*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
 }
 
 void fseek(POSFILE point,FILE* f){

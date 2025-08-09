@@ -56,5 +56,5 @@ uint8 getLastKeyCode();
 bool isKeyBuffered();
 bool isKeyPressed(uint8 key);
 void eatKeyBuffered();
-
+void eatBuffer();
 #endif

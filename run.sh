@@ -39,44 +39,19 @@ i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/elf.cpp" -o "bin/
 i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/image.cpp" -o "bin/image.o"
 i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/render2d.cpp" -o "bin/render2d.o"
 i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/pit.cpp" -o "bin/pit.o"
+i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/syscall.c" -o "bin/syscall.o"
 
-i386-elf-ld -o "grub/boot/kernel.elf" -T linker.ld -m elf_i386 "bin/pit.o" "bin/render2d.o" "bin/image.o" "bin/elf.o" "bin/mouse.o" "bin/keyboard.o" "bin/rtl8139.o" "bin/ne2000.o" "bin/nics.o" "bin/fat.o" "bin/interpreter.o" "bin/pci.o" "bin/isr.o" "bin/idt.o" "bin/math.o" "bin/rtc.o" "bin/vga.o" "bin/games.o" "bin/editor.o" "bin/disk.o" "bin/vfs.o" "bin/realEntry.o" "bin/gdt.o" "bin/string.o" "bin/term.o" "bin/kernelE.o" "bin/kernel.o" "bin/functions.o" "bin/utilities.o" "bin/mem.o" -z noexecstack
+i386-elf-ld -o "grub/boot/kernel.elf" -T linker.ld -m elf_i386 "bin/syscall.o" "bin/pit.o" "bin/render2d.o" "bin/image.o" "bin/elf.o" "bin/mouse.o" "bin/keyboard.o" "bin/rtl8139.o" "bin/ne2000.o" "bin/nics.o" "bin/fat.o" "bin/interpreter.o" "bin/pci.o" "bin/isr.o" "bin/idt.o" "bin/math.o" "bin/rtc.o" "bin/vga.o" "bin/games.o" "bin/editor.o" "bin/disk.o" "bin/vfs.o" "bin/realEntry.o" "bin/gdt.o" "bin/string.o" "bin/term.o" "bin/kernelE.o" "bin/kernel.o" "bin/functions.o" "bin/utilities.o" "bin/mem.o" -z noexecstack
 
 grub-mkrescue -o ENEIDO.iso grub/
 #sudo cat "bin/boot.bin" "bin/full_kernel.bin" "bin/zeroes.bin" >"bin/OS.bin"
 
 #REMOVE ALL NON USE FILES
-rm bin/kernelE.o
-rm bin/kernel.o
-rm bin/functions.o
-rm bin/utilities.o
-rm bin/mem.o
-rm bin/term.o
-rm bin/string.o
-rm bin/gdt.o
-rm bin/realEntry.o
-rm bin/vfs.o
-rm bin/disk.o
-rm bin/editor.o
-rm bin/games.o
-rm bin/vga.o
-rm bin/rtc.o
-rm bin/math.o
-rm bin/idt.o
-rm bin/isr.o
-rm bin/pci.o
-rm bin/fat.o
-rm bin/interpreter.o
-rm bin/ne2000.o
-rm bin/nics.o
-rm bin/keyboard.o
-rm bin/rtl8139.o
-rm bin/image.o
-
+rm bin/*
 
 #sudo ip tuntap add dev tap0 mode tap
 #sudo ip link set tap0 up
-qemu-system-i386 "ENEIDO.iso" #\
+qemu-system-i386 "ENEIDO.iso" -m 512M
   #-device rtl8139,netdev=n1 \
   #-netdev tap,id=n1,ifname=tap0,script=no,downscript=no #\
   #-object filter-dump,id=dump,netdev=net0,file=out.pcap

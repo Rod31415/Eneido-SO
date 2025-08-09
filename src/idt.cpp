@@ -50,6 +50,8 @@ extern "C" void _irq13();
 extern "C" void _irq14();
 extern "C" void _irq15();
 
+extern "C" void _isrs_syscall();
+
 struct regs
 {
 	unsigned int gs, fs, es, ds;                         /* pushed the segs last */
@@ -212,6 +214,8 @@ void isrs_install()
 	idt_set_entry(45, (unsigned)_irq13, 0x8E);
 	idt_set_entry(46, (unsigned)_irq14, 0x8E);
 	idt_set_entry(47, (unsigned)_irq15, 0x8E);
+
+	idt_set_entry(128, (unsigned)_isrs_syscall, 0x8E);
 }
 
 char *exception_messages[] =
@@ -297,5 +301,36 @@ extern "C" void irq_handler(struct regs *r)
 
 	if (r->int_no >= 40)
 		outport(0xA0, 0x20);
-	outport(0x20, 0x20);
+		outport(0x20, 0x20);
 }
+
+void (*INT_routines[255])(struct regs *r) = {
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0};
+
+
+extern "C" void eint_handler(struct regs *r)
+{
+	//printf("SYSCALL %d - /n",r->eax);
+	refresh();
+	switch (r->eax)
+	{
+	case 3:
+		r->eax=syscall_writeInd3(r->ebx,(char*)r->ecx,r->edx);
+		break;
+	case 4:
+		r->eax=syscall_writeInd4(r->ebx,(const char*)r->ecx,r->edx);
+		break;
+	case 54:
+		r->eax=0;
+		break;
+	case 146:
+		r->eax=syscall_writevInd146(r->ebx,(const iovec*)r->ecx,r->edx);
+		break;
+
+	}
+	
+	
+
+}
+

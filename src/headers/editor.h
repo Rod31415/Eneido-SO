@@ -5,7 +5,7 @@
 #include "vfs.h"
 #include "colors.h"
 
-void initEditor(DIR file);
+void initEditor(char* filename);
 void loopEditor();
 
 

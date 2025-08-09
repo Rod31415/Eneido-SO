@@ -5,6 +5,7 @@
 #include "string.h"
 #include "utilities.h"
 #include "keyboard.h"
+#include "multiboot.h"
 
 typedef struct{
 
@@ -23,16 +24,28 @@ uint32 FileSize;
 
 }__attribute__((packed)) DirectoryStruct;
 
+typedef uint32 CLUSTER;
+typedef uint32 ENTRY;
+
 typedef DirectoryStruct* DIR;
 typedef DirectoryStruct FILE;
 typedef int32 POSFILE;
 
-void initRootDirectory();
+void initRootDirectoryWithModules(multiboot_info *mb);
+char* parseFATnames(char* filename);
+bool changeDirectory(char* str);
+void listDirectories();
+void seeAllVFSFromClusterP(CLUSTER P,uint32 stack);
+DIR retBinDirectory();
 
+FILE* fCreateNewDirectory(char* str);
+FILE* fCreateNewFile(char* str);
 
 
 FILE* fopen(char* filename);
+FILE* fopendir(DIR directory,char* filename);
 void fputs(char* data, FILE* f);
 void fgets(char* data, uint32 lenght, FILE* f);
+void* fgetpointer(FILE* f);
 void fseek(int32 point,FILE* f);
 #endif

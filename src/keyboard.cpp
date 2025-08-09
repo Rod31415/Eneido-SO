@@ -57,6 +57,17 @@ wait_for_ack();
     for (volatile int i=0; i<10000; i++);
 }
 
+void eatBuffer(){
+	for (uint32 i = 0; i < 256; i++)
+		{
+			lastAsciiKeyBuffered[i] = 0;
+			lastKeyBuffered[i] = 0;
+			keyBuffered[i] = false;
+		}
+		
+		keyStackBuffer=0;
+}
+
 void eatKeyBuffered()
 {
 	if (keyStackBuffer > 0)

@@ -147,6 +147,15 @@ void printBin(int32 bin)
 
 void printChr(uint32 chr)
 {
+	if(chr==0xA){globalColumn = 0;
+			globalRow++;
+				
+		if (globalRow >= maxRows)
+			{
+				globalRow = maxRows - 1;
+				scrollDown();
+			}
+		return;}
 	draw_char(globalColumn * FontWidth, globalRow * FontHeight, (uint8)(chr & 255), actualColor);
 	nextPosition();
 }

@@ -141,7 +141,7 @@ void PCIInitDrivers()
 
 void PCIShowDevices()
 {
-
+	return;
 	for (uint32 bus = 0; bus < 8; bus++)
 	{
 		for (uint32 device = 0; device < 32; device++)
@@ -151,6 +151,7 @@ void PCIShowDevices()
 
 			for (uint32 functions = 0; functions < maxFunctions; functions++)
 			{
+				
 	PCIDescriptor *dev;
 	PCIGetDescriptor(dev, bus, device, functions);
 
@@ -164,7 +165,11 @@ void PCIShowDevices()
 		printf(PCIDeviceClasses[dev->class_id]);
 	}
 	printf("/n");
-			}
+	
+			}return;
+			
 		}
+
 	}
+	
 }

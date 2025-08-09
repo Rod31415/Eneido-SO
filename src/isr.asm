@@ -366,6 +366,8 @@ _irq15:
 
 extern fault_handler
 extern irq_handler
+extern eint_handler
+global _isrs_syscall
 
 isr_common_stub:
     pusha
@@ -417,6 +419,33 @@ irq_common_stub:
     iret
 
 
+_isrs_syscall:
+    cli
+    push byte 0
+    push byte 80
+    pusha
+    push ds
+    push es
+    push fs
+    push gs
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov eax, esp
+    push eax
+    mov eax, eint_handler
+    call eax
+    add esp,4
+    pop gs
+    pop fs
+    pop es
+    pop ds
+    popa
+    add esp, 8
+    sti
+    iret
 global idt_flush
 
 idt_flush:
@@ -424,3 +453,4 @@ idt_flush:
     lidt [eax]
     sti
     ret
+

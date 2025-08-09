@@ -8,6 +8,7 @@
 #include "keyboard.h"
 #include "pit.h"
 #include "mouse.h"
+#include "syscall.h"
 
 void idt_install();
 void safe_irq_init();

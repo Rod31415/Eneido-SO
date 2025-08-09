@@ -17,6 +17,8 @@ uint32 maxRowsInFile = 0;
 #define height 29
 #define width 80
 
+#define COMBINE_WORD(msb, lsb) (((uint32)(msb) << 16) | lsb)
+
 char lineStr[1000][width];
 
 bool kbhit()
@@ -29,7 +31,7 @@ bool kbhit()
 uint8 letter;
 
 uint32 localX = 0, localY = 0;
-FILE* localFile;
+FILE *localFile;
 
 void drawSide()
 {
@@ -45,14 +47,15 @@ void drawSide()
 	changeColor(COLOR_WHITE);
 	change_ground_color(1);
 }
+uint32 address = 0;
 void drawBottom()
 {
 	draw_rect(0, (height - 1) * 16 + 8, width * 8, 24, COLOR_WHITE);
 	change_ground_color(false);
 	changeColor(COLOR_BLACK);
 	gotoxy(1, 29);
-	printf("FILE:");
-	printf(localFile->Name);
+	printf("FILE: %d", address);
+	// printf(localFile->Name);
 	gotoxy(36, 29);
 	printf("EDITOR");
 	gotoxy(62, 29);
@@ -62,8 +65,9 @@ void drawBottom()
 	gotoxy(2, 0);
 	changeColor(COLOR_WHITE);
 }
-char buff[5 * 512 * 8];
-void initEditor(char* filename)
+char buff[512 * 8];
+
+void initEditor(char *filename)
 {
 
 	col = 0;
@@ -77,23 +81,28 @@ void initEditor(char* filename)
 		}
 	}
 
-	localFile=fopen(filename);
+	localFile = fopen(filename);
+	address = (COMBINE_WORD(localFile->FstClusHI, localFile->FstClusLO) * 512 + 0x800000);
+	if (localFile == (DIR)-1)
+		return;
 	cls(COLOR_BLACK);
-	
-	fgets(buff,sizeof(buff),localFile);
+
+	fgets(buff, sizeof(buff), localFile);
+
 	uint32 rowIndex = 0, colIndex = 0;
 
-	for (uint32 u = 0; u < localFile->FileSize * 512*8; u++)
+	for (uint32 u = 0; u < localFile->FileSize * 512; u++)
 	{
 
 		if (buff[u] == 13)
 		{
-			lineStr[rowIndex][colIndex] = 1;
+			lineStr[rowIndex][colIndex] = 0;
 			colIndex = 0;
 			rowIndex++;
 			u++;
 		}
-		if(buff[u]==0)break;
+		if (buff[u] == 0)
+			break;
 		lineStr[rowIndex][colIndex] = (char)buff[u];
 		colIndex++;
 	}
@@ -146,8 +155,8 @@ void checkSize()
 			break;
 		}
 	}
-	//localFile.size = (uint32)(size / 512) + 1;
-	//modifyFile(localFile.name, localFile);
+	// localFile.size = (uint32)(size / 512) + 1;
+	// modifyFile(localFile.name, localFile);
 }
 
 void refreshMaxFileRows()
@@ -226,30 +235,38 @@ void loopEditor()
 		if (letter == esc)
 		{
 
-			uint32 rowIndex=0,colIndex=0;
+			uint32 rowIndex = 0, colIndex = 0;
 			uint32 u;
-			for (u = 0; u < localFile->FileSize * 512*8; u++)
+			bool ret = false;
+			for (u = 0; u < localFile->FileSize * 512; u++)
 			{
-
-	if (lineStr[rowIndex][colIndex] == 0)
-	{
-		if (rowIndex == maxRowsInFile|| lineStr[0][colIndex+1] == 0)
-		{
-			break;
-		}
-		else
-		{
-			rowIndex++;
-			colIndex = 0;
-			buff[u] = 13;
-			u++;
-		}
-	}
-	buff[u] = (uint8)lineStr[rowIndex][colIndex];
-	colIndex++;
+				if (ret)
+				{
+					buff[u] = 0;
+				}
+				else
+				{
+					if (lineStr[rowIndex][colIndex] == 0)
+					{
+						if (rowIndex == maxRowsInFile || lineStr[0][colIndex + 1] == 0)
+						{
+							ret = true;
+						}
+						else
+						{
+							rowIndex++;
+							colIndex = 0;
+							buff[u] = 13;
+							u++;
+						}
+					}
+					buff[u] = (uint8)lineStr[rowIndex][colIndex];
+					colIndex++;
+				}
 			}
 			buff[u+1]=0;
-			fputs(buff,localFile);
+			fseek(0, localFile);
+			fputs(buff, localFile);
 			break;
 		}
 		uint32 lgtStr = lenghtStr(lineStr[row]);
@@ -294,17 +311,17 @@ void loopEditor()
 		{
 			if (col <= 0 && row > 0)
 			{
-	quitRow(row);
-	row--;
-	update_cursor(col + colOffSet, row);
-	refreshMaxFileRows();
+				quitRow(row);
+				row--;
+				update_cursor(col + colOffSet, row);
+				refreshMaxFileRows();
 			}
 			else if (col > 0)
 			{
-	eraseStr(lineStr[row], col - 1, 1);
-	col--;
-	printLine();
-	update_cursor(col + colOffSet, row);
+				eraseStr(lineStr[row], col - 1, 1);
+				col--;
+				printLine();
+				update_cursor(col + colOffSet, row);
 			}
 		}
 		else if (letter != 0 && letter < 128)

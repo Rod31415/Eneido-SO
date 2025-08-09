@@ -14,7 +14,7 @@ void ElfLoadObjectFile(uint32 base_address){
 		Elf32_Shdr* section_headers=(Elf32_Shdr*)(s->e_shoff+base_address);
 
 
-        Elf32_Sym *symbolTable;
+       /* Elf32_Sym *symbolTable;
         char *stringTable;
 		uint32 num_symbols;
 
@@ -59,7 +59,7 @@ void ElfLoadObjectFile(uint32 base_address){
 				uint32 target= sectionbase;
 
 				for(uint32 j=0;j< num_rels;j++){
-					applyRelocationElf(&rels[j],section_headers,symbolTable,stringTable,base_address,target,j);
+					//applyRelocationElf(&rels[j],section_headers,symbolTable,stringTable,base_address,target,j);
 					//printf("/n");
 				}
 
@@ -68,9 +68,21 @@ void ElfLoadObjectFile(uint32 base_address){
 				printf("-- %d --/n",section_headers[i].sh_type);
 			#endif
 		}
-
-		
-				void* addr=(void*)(sectionbase);
+*/				#define PT_LOAD 1
+				Elf32_Phdr *program_headers=(Elf32_Phdr*)(s->e_phoff+base_address);
+				for(uint32 i=0;i<s->e_phnum;i++){
+					
+					if(program_headers[i].p_type==PT_LOAD){
+						uint32 memaddr=(program_headers[i].p_vaddr+(program_headers[i].p_align-1))&~(program_headers[i].p_align-1);
+						((uint8*)memaddr)[0]=23;
+						memcpy(program_headers[i].p_offset+base_address,memaddr,program_headers[i].p_filesz);
+						memset((program_headers[i].p_vaddr+program_headers[i].p_filesz),0,program_headers[i].p_memsz - program_headers[i].p_filesz);
+						//	printf("%h   %d/n ",memaddr,program_headers[i].p_memsz);
+					}
+				}
+				
+				uint32 newbase_address=s->e_entry;
+				void* addr=(void*)(newbase_address);
 				typedef int(*func_t)(void);
 
 				func_t call=(func_t)addr;
@@ -79,13 +91,13 @@ void ElfLoadObjectFile(uint32 base_address){
 				uint8* code=(uint8*)call;
 
 				#ifdef DEBUG
-				for(uint32 i=0;i< textTable->sh_size;i++){
+				for(uint32 i=0;i< 80;i++){
 				printf("%x/",code[i]);}
 				#endif
 
 
 //#ifdef DEBUG
-		printf("Program Ended -  Returned : %d",a);
+		printf("Program Ended -  Returned : %d",0);
 //		#endif
 }
 
