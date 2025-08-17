@@ -19,6 +19,7 @@
 #include "elf.h"
 #include "render.h"
 #include "colors.h"
+#include "mem.h"
 
 
 #endif

@@ -9,7 +9,10 @@
 #include "pit.h"
 #include "mouse.h"
 #include "syscall.h"
+#include "ctx.h"
+#include "term.h"
 
 void idt_install();
 void safe_irq_init();
+
 #endif

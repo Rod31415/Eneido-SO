@@ -1,13 +1,13 @@
 #include "headers/kernel.h"
 
-extern "C" int sys_print(const void *buf, uint32 count);
+ void * kernel_eip;
 
 extern "C" void _main(multiboot_info *mboot)
 {
 
 	gdt_install();
 	idt_install();
-	
+	PCIInitDrivers();
 
 vbe_mode_info_struct *vbe = (vbe_mode_info_struct *)(uint32)mboot->vbe_mode_info;
 
@@ -21,17 +21,33 @@ vbe_mode_info_struct *vbe = (vbe_mode_info_struct *)(uint32)mboot->vbe_mode_info
 
 	initDisk();
 
+	initAlloc();
 
-	PCIInitDrivers();
-	
+	/*uint32 ptr1=(uint32)kalloc(10);
+	uint32 ptr2=(uint32)kalloc(10);
+
+	printf("PRIMER  %d/n",ptr1);
+	printf("SEGUNDO %d/n",ptr2);
+
+	kfree((void*)ptr1);
+
+	ptr1=(uint32)kalloc(100);
+
+	printf("PRIMER  %d/n",ptr1);
+	printf("SEGUNDO %d/n",ptr2);*/
+
+	/*refresh();
+	while(1){}*/
 	//initMouse();
 	initKeyboard();
 	
+
 	initRootDirectoryWithModules(mboot);
 
-	//refresh();
-	//while(1){}
+	kernel_eip=&&kernel_entry;
   init_term(mboot);
+
+  kernel_entry:
 	while (1)
 	{
 		 loop_term();

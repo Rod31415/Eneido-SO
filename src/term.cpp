@@ -116,7 +116,7 @@ int8 line[80];
 uint8 indexLetter = 0;
 multiboot_info *mboot;
 uint32 argc;
-int8 argv[10][80];
+char argv[10][80];
 uint8 first = 0;
 
 uint32 searchModule(int8* str){
@@ -217,49 +217,6 @@ void formatCommand()
 	} while (line[++i] != 0);
 }
 
-void echo()
-{
-	backspace();
-	for (int i = 0; i < 80; i++)
-	{
-		(argv[1][i] == '"') ? argv[1][i] = ' ' : 0;
-	}
-	printf((char*)((argc == 2) ? argv[1] : "ERROR : Escribe un mensaje despues del comando"));
-	new_line_term();
-}
-
-void help()
-{
-	backspace();
-	changeColor(COLOR_LIGHT_GRAY);
-	printf("  Solo tenemos los siguientes comandos: /n /n");
-	changeColor(COLOR_LIGHT_CYAN);
-	printf("   echo <mensaje>             - Muestra un mensaje en la pantalla /n");
-	printf("   init                       - Reinicia la terminal /n");
-	printf("   help                       - Abre esta ventana /n");
-	printf("   colors                     - Abre una prueba de colores /n");
-	printf("   license                    - Muestra la licencia y creditos del proyecto /n");
-	printf("   ls                         - Lista los archivos del directorio /n");
-	printf("   tree                       - Lista los archivos de todo el FS /n");
-	printf("   cd <directorio>            - Cambia de directorio /n");
-	printf("   mkdir <directorio>         - Crea un directorio /n");
-	printf("   inf <archivo>              - Muestra la informacion del archivo /n");
-	printf("   cat <archivo>              - Muestra el contenido del archivo /n");
-	printf("   touch <archivo>            - Crea un archivo /n");
-	printf("   edit <archivo> <contenido> - Edita un archivo /n");
-	printf("   edit <archivo>             - Abre el archivo con el editor de texto/n");
-	printf("   date                       - Muestra la fecha y hora actual/n");
-	printf("   pci                        - Muestra los dispositivos PCI/n");
-	printf("   doen                       - Ejecuta el interprete de DOEN/n");
-	printf("   send 'file' <a|archivo>    - Envia el argumento o archivo por la red local/n");
-	printf("   recv                       - Recibe el ultimo paquete enviato por la red local/n");
-	printf("   mac                        - Mustra la direccion MAC/n");
-	printf("   elf <archivo>              - Enlaza y ejecuta programas en base a un archivo elf /n");
-	printf("   view <archivo>             - Muestra imagenes de los modulos de GRUB /n");
-	changeColor(COLOR_WHITE);
-	new_line_term();
-}
-
 void colors()
 {
 	boolOnTest = 1;
@@ -280,16 +237,6 @@ void colors()
 	}
 }
 
-void license()
-{
-	backspace();
-	printf("/n             MIT License /n");
-	printf("       Hecho por Rodrigo Bustos /n");
-	printf(" Puedes acceder al codigo fuente yendo a :/n");
-	printf("  https://github.com/Rod31415/Eneido-SO/n /n");
-	new_line_term();
-}
-
 void clear()
 {
 	cls(COLOR_BLACK);
@@ -298,34 +245,16 @@ void clear()
 	printf(">");
 }
 
-void cat(char *name)
-{
-	/*backspace();
-	DIR file = searchFile(name);
-	if (file.name[0] == 0)
-	{
-		return;
-	}
-	uint8 buffer[512];
-	file.read(buffer);
-	char buff[80];
-	for (int i = 0; i < 80; i++)
-	{
-		buff[i] = (int8)buffer[i];
-	}
-	buff[80] = 0;
-	printf(buff);*/
-}
 
 void inf(char *name)
 {
 	backspace();
-	FILE* file = fopen(name);
-	if(file==(FILE*)-1)return;
+	KFILE* file = kopen(name,O_RDONLY);
+	if(file==(KFILE*)-1)return;
 	printf("Nombre: ");
-	printf(file->Name);
-	printf("/nTamanio: %d/n",file->FileSize);
-	printf("Cluster: %d/n",COMBINE_WORD(file->FstClusHI,file->FstClusLO));
+	printf(file->entry->Name);
+	printf("/nTamanio: %d/n",file->entry->FileSize);
+	printf("Cluster: %d/n",COMBINE_WORD(file->entry->FstClusHI,file->entry->FstClusLO));
 }
 
 void edit(char *name, char *str)
@@ -356,7 +285,7 @@ void detectCommands()
 		return;
 	}
 
-	/*FILE* f=(DIR)-1;//=fopen(argv[0]);
+	/*FILE* f=(DIR)-1;//=kopen(argv[0]);
 	if(f!=(DIR)-1){
 		printf("BIEN");
 	}*/
@@ -366,25 +295,12 @@ void detectCommands()
 		init_term(mboot);
 	}
 
-	else if (strcmp(argv[0], "echo") == 0)
-	{
-		echo();
-	}
-
-	else if (argc == 1 && strcmp(argv[0], "help") == 0)
-	{
-		help();
-	}
-
+	
 	else if (argc == 1 && strcmp(argv[0], "colors") == 0)
 	{
 		colors();
 	}
 
-	else if (argc == 1 && strcmp(argv[0], "license") == 0)
-	{
-		license();
-	}
 	else if (argc == 1 && strcmp(argv[0], "clear") == 0)
 	{
 		clear();
@@ -426,31 +342,10 @@ void detectCommands()
 		fCreateNewDirectory(argv[1]);
 	}
 
-	else if (argc == 2 && strcmp(argv[0], "cat") == 0)
-	{
-		cat(argv[1]);
-		new_line_term();
-	}
 	else if (argc == 2 && strcmp(argv[0], "inf") == 0)
 	{
 		inf(argv[1]);
 		new_line_term();
-	}
-	else if (argc == 2 && strcmp(argv[0], "touch") == 0)
-	{
-
-		fCreateNewFile(argv[1]);
-		//FILE* f=fopen(argv[1]);
-	}
-
-	else if (argc == 3 && strcmp(argv[0], "edit") == 0)
-	{
-		edit(argv[1], argv[2]);
-	}
-	else if (argc == 2 && strcmp(argv[0], "edit") == 0)
-	{
-		editor(argv[1]);
-		init_term(mboot);
 	}
 
 	else if (argc == 1 && strcmp(argv[0], "games") == 0)
@@ -541,12 +436,12 @@ void detectCommands()
 	}
 	else if (argc == 2 && strcmp(argv[0], "elf") ==0){
 		backspace();
-		FILE* f=fopen(argv[1]);
+		KFILE* f=kopen(argv[1],O_RDONLY);
 
-		if(f==(DIR)-1){return;}
+		if(f==(KFILE*)-1){return;}
 
-		if(f->Name[8]=='E'&&f->Name[9]=='L'&&f->Name[10]=='F'){
-			ElfLoadObjectFile((uint32)fgetpointer(f));
+		if((f->entry->Name[8]=='E'&&f->entry->Name[9]=='L'&&f->entry->Name[10]=='F')||(f->entry->Name[8]==' '&&f->entry->Name[9]==' '&&f->entry->Name[10]==' ')){
+			ElfLoadObjectFile((uint32)kgetpointer(f),argc,argv);
 		}
 		else{
 			printf("ARCHIVO DE FORMATO NO DISPONIBLE");
@@ -557,12 +452,12 @@ void detectCommands()
 	else if (argc == 2 && strcmp(argv[0], "view") ==0){
 		boolOnTest = 1;
 
-		FILE* f=fopen(argv[1]);
+		KFILE* f=kopen(argv[1],O_RDONLY);
 
-		if(f==(DIR)-1){return;}
+		if(f==(KFILE*)-1){return;}
 
-		if(f->Name[8]=='B'&&f->Name[9]=='M'&&f->Name[10]=='P'){
-		initViewer((uint32)fgetpointer(f));
+		if(f->entry->Name[8]=='B'&&f->entry->Name[9]=='M'&&f->entry->Name[10]=='P'){
+		initViewer((uint32)kgetpointer(f));
 		}
 		else{
 			printf("ARCHIVO DE FORMATO NO DISPONIBLE");
@@ -577,16 +472,20 @@ void detectCommands()
 
 	else
 	{
-		//FILE* f=fopendir(retBinDirectory(),argv[0]);
-		FILE* f=fopen(argv[0]);
+		//FILE* f=kopendir(retBinDirectory(),argv[0]);
+		KFILE* f=kopen(argv[0],O_RDONLY);
 		backspace();
-		if(f!=(DIR)-1){
-			char* b=f->Name;
+		if(f!=(KFILE*)-1){
+			char* b=f->entry->Name;
 			if(b[8]=='E'&&b[9]=='X'&&b[10]=='E'){
-			printf("Ejecutando programa...");
+			//printf("Ejecutando programa.../n");
+			}
+			if(b[8]=='E'&&b[9]=='L'&&b[10]=='F'){
+			printf("Ejecutando programa.../n");
+			ElfLoadObjectFile((uint32)kgetpointer(f),argc,argv);
 			}
 				
-			
+			ElfLoadObjectFile((uint32)kgetpointer(f),argc,argv);
 		}
 		else{
 		printf("Uhh me mataste, no tengo el comando ");
@@ -595,7 +494,7 @@ void detectCommands()
 		new_line_term();
 	}
 
-	for (uint8 i = 0; i < 100; i++)
+	for (uint8 i = 0; i < 80; i++)
 	{
 		line[i] = 0;
 	}
@@ -603,6 +502,16 @@ void detectCommands()
 	getConsoleCursorPosition(&xCursor, &yCursor);
 	update_cursor(xCursor, yCursor);
 	changeColor(COLOR_WHITE);
+}
+
+void returnTerm(int code){
+	for (uint8 i = 0; i < 80; i++)
+	{
+		line[i] = 0;
+	}
+	changeColor(COLOR_WHITE);
+	new_line_term();
+	
 }
 
 void loop_term()

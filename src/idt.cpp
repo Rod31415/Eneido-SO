@@ -309,17 +309,43 @@ void (*INT_routines[255])(struct regs *r) = {
 		0, 0, 0, 0, 0, 0, 0, 0};
 
 
+extern void *kernel_eip;
+extern uint32 kernel_esp,kernel_ebp;
+
 extern "C" void eint_handler(struct regs *r)
 {
 	//printf("SYSCALL %d - /n",r->eax);
 	refresh();
 	switch (r->eax)
 	{
+	case 1:
+		returnTerm(r->ebx);
+		asm volatile(
+			"jmp *%0\n"
+			:
+			:  "r"(kernel_eip)
+		);
+			
+		break;
 	case 3:
-		r->eax=syscall_writeInd3(r->ebx,(char*)r->ecx,r->edx);
+		r->eax=syscall_readInd3(r->ebx,(char*)r->ecx,r->edx);
 		break;
 	case 4:
-		r->eax=syscall_writeInd4(r->ebx,(const char*)r->ecx,r->edx);
+		r->eax=syscall_writeInd4(r->ebx,( char*)r->ecx,r->edx);
+		break;
+	case 5:
+		r->eax=syscall_openInd5(( char*)r->ebx,r->ecx,r->edx);
+		break;
+	case 6:
+		r->eax=syscall_closeInd6((KFILE*)r->ebx);
+		break;
+	case 19:
+		r->eax=syscall_seekInd19(r->ebx,r->ecx,r->edx);
+		break;
+	case 39:
+		printf((char*)r->ebx);
+		r->eax=syscall_mkdirInd39((const char*)r->ebx,r->ecx);
+		
 		break;
 	case 54:
 		r->eax=0;

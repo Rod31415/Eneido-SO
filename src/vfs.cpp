@@ -29,7 +29,6 @@ uint32 actualDirectoryDIR = 0;
 
 DIR root;
 
-
 #define COMBINE_WORD(msb,lsb) (((uint32)(msb)<<16)|lsb)
 
 void* getClusterEntryFromP(CLUSTER P){
@@ -284,18 +283,22 @@ bool isELF(void* start){
 }
 uint32 imagesN=0;
 uint32 elfN=0;
-void createModulesFiles(DIR root,void* start,uint32 size){
-	char img[11]="img";
+void createModulesFiles(DIR root,void* start,uint32 size,char* name){
+	char file[11];
+	
+	strcpy(file,name);
+	/*char img[11]="img";
 	char exe[11]="file";
+
 
 	if(isBMP(start)){
 		imagesN++;
 		char bmp[6]={imagesN+48,'.','B','M','P',0};
-		strcpy(img+3,bmp,6);
-		DIR f=createNewFile(root, parseFATnames(img),size/BYTSPERCLUS+1);
+		strcpy(img+3,bmp,6);*/
+		DIR f=createNewFile(root, parseFATnames(name),size/BYTSPERCLUS+1);
 		char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
 		memcpy((uint32)start,(uint32)fptr,size);
-	}
+	/*}
 	if(isELF(start)){
 		elfN++;
 		char elf[6]={elfN+48,'.','E','L','F',0};
@@ -303,10 +306,20 @@ void createModulesFiles(DIR root,void* start,uint32 size){
 		DIR f=createNewFile(root,parseFATnames(exe),size/BYTSPERCLUS+1);
 		char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
 		memcpy((uint32)start,(uint32)fptr,size);
-	}
+	}*/
 }
 
+static char* binNames[7]= {"cat         ",
+				 		   "touch       ",
+						   "echo        ",
+						   "help        ",
+						   "license     ",
+						   "editor      ",
+						   "hexdump     "};
+
 void initRootDirectoryWithModules(multiboot_info *mb){
+
+
 	prepareClusters();
 	DIR rootDIRaddress,root;
 	strcpy(root->Name,".          ",11);
@@ -322,24 +335,27 @@ void initRootDirectoryWithModules(multiboot_info *mb){
 	strcpy(dot->Name,"..         ",11);
 	assignNewDirectoryEntry(root,dot);
 
-	createNewFile(root,"LEEME   TXT",1);
-
 	
-	FILE* f=getDirectoryEntryByName(root,"LEEME   TXT");
-	char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
-	char data[50]={'A','B','C',13,'C',0};
-	memcpy((uint32)data,(uint32)fptr,6);
+	
 	
 	createNewDirectory(root,          "BIN        ",1);
 	root=getDirectoryEntryByName(root,parseFATnames("bin"));
 	BinDirGlobal=root;
-	createNewFile(root,"LS         ",1);
-	createNewFile(root,"TOUCH      ",1);
+
+
+	createNewFile(root,"LEEME   TXT",1);
+
+	
+	DIR f=getDirectoryEntryByName(root,"LEEME   TXT");
+	char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
+	char data[50]={'A','B','C','N','C',0xA,'H','O','L','A',-1};
+	memcpy((uint32)data,(uint32)fptr,11);
+
 	//root=getDirectoryEntryByName(root,parseFATnames(".."));
 
 	module_info* md=(module_info*)mb->mods_addr;
 	for(uint32 i=0;i<mb->mods_count;i++){
-		createModulesFiles(root,(void*)md[i].mod_start,(md[i].mod_end-md[i].mod_start));
+		createModulesFiles(root,(void*)md[i].mod_start,(md[i].mod_end-md[i].mod_start),binNames[i]);
 		
 	}
 	//seeDirectoriesOnClusterP(0,0);
@@ -366,51 +382,75 @@ bool changeDirectory(char* str){
 	return true;
 }
 
-FILE* fCreateNewDirectory(char* str){
+DIR fCreateNewDirectory(char* str){
 	return createNewDirectory(GlobalDir,parseFATnames(str),1);
 }
 
-FILE* fCreateNewFile(char* str){
+DIR fCreateNewFile(char* str){
 	return createNewFile(GlobalDir,parseFATnames(str),1);
 }
 
-POSFILE GlobalPos=0;
 
-FILE* fopen(char* filename){
-	GlobalPos=0;
-	char auxFilename[12];
-	memcpy((uint32)parseFATnames(filename),(uint32)auxFilename,12);
- 	FILE* f=getDirectoryEntryByName(GlobalDir,auxFilename);
-	if(f==(DIR)-1){
-		fCreateNewFile(filename);
-	}
-	return f;
+
+KFILE* allocFileDescriptor(DIR f,uint32 flags){
+	KFILE* ptr=(KFILE*)kalloc(20);
+	ptr->entry=f;
+	ptr->pos=(flags&O_APPEND)?f->FileSize:0;
+	ptr->size=f->FileSize;
+	ptr->used=1;
+	ptr->flags=flags;
+	return ptr;
 }
 
-FILE* fopendir(DIR directory,char* filename){
-	GlobalPos=0;
-	
+
+bool freeFileDescriptor(KFILE* file){
+	return kfree((void*)file);
+}
+
+
+
+
+
+KFILE* kopen(char* filename,uint32 flags){
+	char auxFilename[12];
+	memcpy((uint32)parseFATnames(filename),(uint32)auxFilename,12);
+ 	DIR f=getDirectoryEntryByName(GlobalDir,auxFilename);
+	if(f==(DIR)-1){
+		if(!(flags&O_CREAT))
+		return (KFILE*)-1;
+		
+		f=fCreateNewFile(filename);
+	}
+	if(flags&O_EXCL)
+		return (KFILE*)-1;
+	return allocFileDescriptor(f,0);
+}
+
+bool kclose(KFILE* file){
+	return freeFileDescriptor(file);
+}
+
+DIR kopendir(DIR directory,char* filename){
 	memcpy((uint32)parseFATnames(filename),(uint32)filename,12);
  return getDirectoryEntryByName(GlobalDir,filename);
 }
 
-void fputs(char* data, FILE* f){
-uint32 lenght=lenghtStr(data);
-char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO))+GlobalPos);
+void kputs(char* data, uint32 lenght, KFILE* f){
+char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->entry->FstClusHI,f->entry->FstClusLO))+f->pos);
 strcpy(fptr,data,lenght);
-GlobalPos+=lenght;
+f->pos+=lenght;
 }
 
-void fgets(char* data, uint32 lenght, FILE* f){
-char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO))+GlobalPos);
+void kgets(char* data, uint32 lenght, KFILE* f){
+char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->entry->FstClusHI,f->entry->FstClusLO))+f->pos);
 strcpy(data,fptr,lenght);
-GlobalPos+=lenght;
+f->pos+=lenght;
 }
 
-void* fgetpointer(FILE* f){
-return (void*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
+void* kgetpointer(KFILE* f){
+return (void*)(getClusterDataFromP(COMBINE_WORD(f->entry->FstClusHI,f->entry->FstClusLO)));
 }
 
-void fseek(POSFILE point,FILE* f){
-	GlobalPos=point;
+void kseek(POSFILE point,KFILE* f){
+	f->pos=point;
 }

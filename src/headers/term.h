@@ -19,6 +19,8 @@
 #include "colors.h"
 #include "mouse.h"
 
+void returnTerm(int code);
+
 void init_term(multiboot_info *mb);
 void new_line_term();
 void loop_term();

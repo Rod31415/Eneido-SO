@@ -31,7 +31,7 @@ bool kbhit()
 uint8 letter;
 
 uint32 localX = 0, localY = 0;
-FILE *localFile;
+KFILE *localFile;
 
 void drawSide()
 {
@@ -81,17 +81,17 @@ void initEditor(char *filename)
 		}
 	}
 
-	localFile = fopen(filename);
-	address = (COMBINE_WORD(localFile->FstClusHI, localFile->FstClusLO) * 512 + 0x800000);
-	if (localFile == (DIR)-1)
+	localFile = kopen(filename,O_RDWR);
+	address = (COMBINE_WORD(localFile->entry->FstClusHI, localFile->entry->FstClusLO) * 512 + 0x800000);
+	if (localFile == (KFILE*)-1)
 		return;
 	cls(COLOR_BLACK);
 
-	fgets(buff, sizeof(buff), localFile);
+	kgets(buff, sizeof(buff), localFile);
 
 	uint32 rowIndex = 0, colIndex = 0;
 
-	for (uint32 u = 0; u < localFile->FileSize * 512; u++)
+	for (uint32 u = 0; u < localFile->entry->FileSize * 512; u++)
 	{
 
 		if (buff[u] == 13)
@@ -238,7 +238,7 @@ void loopEditor()
 			uint32 rowIndex = 0, colIndex = 0;
 			uint32 u;
 			bool ret = false;
-			for (u = 0; u < localFile->FileSize * 512; u++)
+			for (u = 0; u < localFile->entry->FileSize * 512; u++)
 			{
 				if (ret)
 				{
@@ -265,8 +265,8 @@ void loopEditor()
 				}
 			}
 			buff[u+1]=0;
-			fseek(0, localFile);
-			fputs(buff, localFile);
+			kseek(0, localFile);
+			kputs(buff, u, localFile);
 			break;
 		}
 		uint32 lgtStr = lenghtStr(lineStr[row]);

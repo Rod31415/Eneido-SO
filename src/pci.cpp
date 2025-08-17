@@ -22,6 +22,24 @@ uint32 PCIReadWord(uint8 bus, uint8 device, uint8 func, uint8 offset)
 	return tmp >> (8 * (offset % 4));
 }
 
+uint32 PCIReadDWord(uint8 bus, uint8 device, uint8 func, uint8 offset)
+{
+	uint32 address;
+	uint32 lbus = (uint32)bus;
+	uint32 lslot = (uint32)device;
+	uint32 lfunc = (uint32)func;
+	uint32 tmp = 0;
+
+	address = (uint32)((lbus << 16) | (lslot << 11) |
+				 (lfunc << 8) | (offset & 0xFC) | (0x1 << 31));
+
+	outportl(CONFIG_ADDRESS, address);
+	// tmp = (uint16)((inportl(CONFIG_DATA) >> ((offset & 2) * 8)) & 0xFFFF);
+
+	return inportl(CONFIG_DATA);
+}
+
+
 void PCIWriteWord(uint8 bus, uint8 device, uint8 func, uint8 offset, uint32 value)
 {
 	uint32 address;
@@ -141,7 +159,6 @@ void PCIInitDrivers()
 
 void PCIShowDevices()
 {
-	return;
 	for (uint32 bus = 0; bus < 8; bus++)
 	{
 		for (uint32 device = 0; device < 32; device++)
@@ -157,16 +174,32 @@ void PCIShowDevices()
 
 	if (dev->vendor_id == 0x0000 || dev->vendor_id == 0xFFFF)
 		break;
-
 	printf("BUS %x, DEV %x, FN %x ", bus, device, functions);
 	printf("= VEN %h, DEV %h, HEAD %d: ", dev->vendor_id, dev->device_id, dev->header_type);
+
+	PCIBusMastering(dev);
+	PCIGeneralDevice *rtl;
+	PCIGetGeneralDevice(dev, rtl);
+	if(rtl->base_address[0]&0x1){
+		printf("/n   IOMAPPED-%d ",rtl->base_address[0]&~0x3);
+	}
+	else{
+		printf("/n  MEMMAPPED-%d ",rtl->base_address[0]&~0xF);
+		uint32 base=rtl->base_address[0];
+		PCIWriteWord(bus,device,functions,0x10,0xFFFFFFFF);
+		uint32 barMask=PCIReadDWord(bus,device,functions,0x10)&~0xF;
+		uint32 size=~barMask+1;
+		PCIWriteWord(bus,device,functions,0x10,base);
+		printf(" size: %d",size);
+	}
+
 	if (dev->class_id <= 20)
 	{
 		printf(PCIDeviceClasses[dev->class_id]);
 	}
 	printf("/n");
 	
-			}return;
+			}//return;
 			
 		}
 

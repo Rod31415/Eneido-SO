@@ -6,8 +6,12 @@
 #include "math.h"
 #include "rtc.h"
 #include "pit.h"
+#include "ctx.h"
 
 #define EI_NIDENT 16
+
+extern void *kernel_eip;
+extern uint32 kernel_esp,kernel_ebp;
 
 typedef struct Elf32_Ehdr{
         unsigned char   e_ident[EI_NIDENT]; 
@@ -66,6 +70,6 @@ typedef struct {
 } Elf32_Rel;
 
 
-void ElfLoadObjectFile(uint32 base_address);
+void ElfLoadObjectFile(uint32 base_address, int argc, char argv[10][80]);
 
 #endif

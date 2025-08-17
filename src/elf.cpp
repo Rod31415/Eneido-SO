@@ -1,74 +1,24 @@
 #include "headers/elf.h"
 
-//#define DEBUG
+
+uint32 kernel_esp;
+uint32 kernel_ebp;
 
 #define ELF32_R_SYM(info)             ((info)>>8)
 #define ELF32_R_TYPE(info)            ((unsigned char)(info))
 #define ELF32_R_INFO(sym, type)       (((sym)<<8)+(unsigned char)(type))
 
+static inline uint32 read_esp(){uint32 v; asm volatile("movl %%esp,%0":"=r"(v)); return v;}
+static inline uint32 read_ebp(){uint32 v; asm volatile("movl %%ebp,%0":"=r"(v)); return v;}
+
 void applyRelocationElf(Elf32_Rel *rel,Elf32_Shdr* sections, Elf32_Sym* symtab, char* strtab, uint32 loadbase,uint32 sectionbase,uint32 n);
 
-void ElfLoadObjectFile(uint32 base_address){
+void ElfLoadObjectFile(uint32 base_address, int argc, char argv[10][80]){
     Elf32_Ehdr* s=(Elf32_Ehdr*)base_address;
 
 		Elf32_Shdr* section_headers=(Elf32_Shdr*)(s->e_shoff+base_address);
 
-
-       /* Elf32_Sym *symbolTable;
-        char *stringTable;
-		uint32 num_symbols;
-
-		Elf32_Shdr* textTable;
-
-
-		for(uint32 i=0;i<s->e_shnum;i++){
-			if(section_headers[i].sh_type==0x2){
-				symbolTable=(Elf32_Sym*)(section_headers[i].sh_offset+base_address);
-				Elf32_Shdr strtabheader=section_headers[section_headers[i].sh_link];
-				stringTable=(char *)(strtabheader.sh_offset + base_address);
-				num_symbols=section_headers[i].sh_size/section_headers[i].sh_entsize;
-			}
-			
-			uint32 s_off=section_headers[s->e_shstrndx].sh_offset+base_address;
-			char* shstrtab=(char*)s_off;
-			char* section_name=shstrtab+section_headers[i].sh_name;
-			if(strcmp(section_name,".text")==0){
-				textTable=&section_headers[i];
-			}
-		}
-
-		
-		uint32 sectionbase=0x500000;
-
-		memcpy((uint32)(base_address+textTable->sh_offset),(uint32)sectionbase,textTable->sh_size);
-
-		char* symbolStrings=(char*)(section_headers[s->e_shstrndx].sh_offset+base_address);
-
-        
-        for(uint32 i=0;i<s->e_shnum;i++){
-			if(section_headers[i].sh_type==0x9&&strcmp(&symbolStrings[section_headers[i].sh_name],".rel.text")==0){
-				#ifdef DEBUG
-				printf("Relocation on :");
-				printf(&symbolStrings[section_headers[i].sh_name]);
-				printf("/n");
-				#endif
-				Elf32_Rel* rels=(Elf32_Rel*)(section_headers[i].sh_offset+base_address);
-
-				int num_rels=section_headers[i].sh_size/sizeof(Elf32_Rel);
-
-				uint32 target= sectionbase;
-
-				for(uint32 j=0;j< num_rels;j++){
-					//applyRelocationElf(&rels[j],section_headers,symbolTable,stringTable,base_address,target,j);
-					//printf("/n");
-				}
-
-			}
-			#ifdef DEBUG
-				printf("-- %d --/n",section_headers[i].sh_type);
-			#endif
-		}
-*/				#define PT_LOAD 1
+		#define PT_LOAD 1
 				Elf32_Phdr *program_headers=(Elf32_Phdr*)(s->e_phoff+base_address);
 				for(uint32 i=0;i<s->e_phnum;i++){
 					
@@ -82,13 +32,33 @@ void ElfLoadObjectFile(uint32 base_address){
 				}
 				
 				uint32 newbase_address=s->e_entry;
-				void* addr=(void*)(newbase_address);
-				typedef int(*func_t)(void);
+				
+				uint32 stack[128];
+				
+				stack[0]=argc;
 
-				func_t call=(func_t)addr;
-				uint32 a=call();
+				uint32 i;
+				for(i=0;i<argc;i++){
+					stack[i+1]=(uint32)argv[i];
+				}
+				stack[i+2]=0;
+				stack[i+3]=0;
 
-				uint8* code=(uint8*)call;
+				uint32 *stack_ptr =&stack[0];
+
+
+				kernel_esp=read_esp();
+				kernel_ebp=read_ebp();
+
+				asm volatile(
+					"movl %0,%%esp\n"
+					"jmp *%1\n"
+					:
+					: "r"(stack_ptr), "r"(newbase_address)
+					: "memory"
+				);
+				
+				printf("Return");
 
 				#ifdef DEBUG
 				for(uint32 i=0;i< 80;i++){
@@ -96,9 +66,9 @@ void ElfLoadObjectFile(uint32 base_address){
 				#endif
 
 
-//#ifdef DEBUG
+#ifdef DEBUG
 		printf("Program Ended -  Returned : %d",0);
-//		#endif
+		#endif
 }
 
 #define R_386_NONE 0
