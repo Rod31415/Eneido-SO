@@ -1178,17 +1178,18 @@ void initInterpreterByArgv(int8 *argv)
 
 uint8 SHOWTOKENS = 0;
 
-void initInterpreterByFile(DIR file, uint8 opt1, uint8 opt2)
+void initInterpreterByFile(char* file, uint8 opt1, uint8 opt2)
 {
 	SHOWVARS = opt1;
 	SHOWTOKENS = opt2;
 
-	int8 buffer[512];
-	memset((uint32)buffer, 0, 512);
+  char* buffer=(char*)kalloc(512);
+  KFILE* localFile = kopen(file,O_RDWR);
+	kgets(buffer, 512, localFile);
 	//file.read((uint8 *)buffer);
 	tokenIndex = 0;
 
-	Lexer(buffer + 4);
+	Lexer(buffer);
 
 	Parser parser;
 
@@ -1232,7 +1233,7 @@ void Lexer(int8 *buffer)
 	while (buffer[0] != 0)
 	{
 
-		if (buffer[0] == ' ' || buffer[0] == 13 || buffer[0] == 1)
+		if (buffer[0] == ' ' || buffer[0] == 13 || buffer[0]==0xA || buffer[0] == 1)
 		{
 			buffer++;
 			continue;

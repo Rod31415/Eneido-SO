@@ -41,8 +41,10 @@ i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/render2d.cpp" -o 
 i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/pit.cpp" -o "bin/pit.o"
 i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/syscall.c" -o "bin/syscall.o"
 i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/ctx.cpp" -o "bin/ctx.o"
+i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/paging.cpp" -o "bin/paging.o"
+i386-elf-g++ -ffreestanding -Wno-write-strings -m32 -c -g "src/process.cpp" -o "bin/process.o"
 
-i386-elf-ld -o "grub/boot/kernel.elf" -T linker.ld -m elf_i386 "bin/ctx.o" "bin/syscall.o" "bin/pit.o" "bin/render2d.o" "bin/image.o" "bin/elf.o" "bin/mouse.o" "bin/keyboard.o" "bin/rtl8139.o" "bin/ne2000.o" "bin/nics.o" "bin/fat.o" "bin/interpreter.o" "bin/pci.o" "bin/isr.o" "bin/idt.o" "bin/math.o" "bin/rtc.o" "bin/vga.o" "bin/games.o" "bin/editor.o" "bin/disk.o" "bin/vfs.o" "bin/realEntry.o" "bin/gdt.o" "bin/string.o" "bin/term.o" "bin/kernelE.o" "bin/kernel.o" "bin/functions.o" "bin/utilities.o" "bin/mem.o" -z noexecstack
+i386-elf-ld -o "grub/boot/kernel.elf" -T linker.ld -m elf_i386 "bin/process.o" "bin/paging.o" "bin/ctx.o" "bin/syscall.o" "bin/pit.o" "bin/render2d.o" "bin/image.o" "bin/elf.o" "bin/mouse.o" "bin/keyboard.o" "bin/rtl8139.o" "bin/ne2000.o" "bin/nics.o" "bin/fat.o" "bin/interpreter.o" "bin/pci.o" "bin/isr.o" "bin/idt.o" "bin/math.o" "bin/rtc.o" "bin/vga.o" "bin/games.o" "bin/editor.o" "bin/disk.o" "bin/vfs.o" "bin/realEntry.o" "bin/gdt.o" "bin/string.o" "bin/term.o" "bin/kernelE.o" "bin/kernel.o" "bin/functions.o" "bin/utilities.o" "bin/mem.o" -z noexecstack
 
 grub-mkrescue -o ENEIDO.iso grub/
 #sudo cat "bin/boot.bin" "bin/full_kernel.bin" "bin/zeroes.bin" >"bin/OS.bin"
@@ -52,10 +54,10 @@ rm bin/*
 
 #sudo ip tuntap add dev tap0 mode tap
 #sudo ip link set tap0 up
-qemu-system-i386 "ENEIDO.iso" -m 512M 
-  #-device rtl8139,netdev=n1 \
-  #-netdev tap,id=n1,ifname=tap0,script=no,downscript=no #\
-  #-object filter-dump,id=dump,netdev=net0,file=out.pcap
+qemu-system-i386 "ENEIDO.iso" -m 512M
+#-device rtl8139,netdev=n1 \
+#-netdev tap,id=n1,ifname=tap0,script=no,downscript=no #\
+#-object filter-dump,id=dump,netdev=net0,file=out.pcap
 
 #wireshark out.pcap
 #sudo tcpdump -i tap0

@@ -309,13 +309,14 @@ void createModulesFiles(DIR root,void* start,uint32 size,char* name){
 	}*/
 }
 
-static char* binNames[7]= {"cat         ",
+static char* binNames[8]= {"cat         ",
 				 		   "touch       ",
 						   "echo        ",
 						   "help        ",
 						   "license     ",
 						   "editor      ",
-						   "hexdump     "};
+						   "hexdump     ",
+						   "a.bmp       "};
 
 void initRootDirectoryWithModules(multiboot_info *mb){
 
@@ -348,8 +349,8 @@ void initRootDirectoryWithModules(multiboot_info *mb){
 	
 	DIR f=getDirectoryEntryByName(root,"LEEME   TXT");
 	char* fptr=(char*)(getClusterDataFromP(COMBINE_WORD(f->FstClusHI,f->FstClusLO)));
-	char data[50]={'A','B','C','N','C',0xA,'H','O','L','A',-1};
-	memcpy((uint32)data,(uint32)fptr,11);
+	char* data="var x=23 var y=1 input(y) print('/n') print(x+y)";
+	memcpy((uint32)data,(uint32)fptr,50);
 
 	//root=getDirectoryEntryByName(root,parseFATnames(".."));
 
@@ -387,6 +388,7 @@ DIR fCreateNewDirectory(char* str){
 }
 
 DIR fCreateNewFile(char* str){
+	printf(str);
 	return createNewFile(GlobalDir,parseFATnames(str),1);
 }
 
@@ -413,13 +415,16 @@ bool freeFileDescriptor(KFILE* file){
 
 KFILE* kopen(char* filename,uint32 flags){
 	char auxFilename[12];
+	
 	memcpy((uint32)parseFATnames(filename),(uint32)auxFilename,12);
+	
  	DIR f=getDirectoryEntryByName(GlobalDir,auxFilename);
 	if(f==(DIR)-1){
+		
 		if(!(flags&O_CREAT))
 		return (KFILE*)-1;
 		
-		f=fCreateNewFile(filename);
+		f=fCreateNewFile(auxFilename);
 	}
 	if(flags&O_EXCL)
 		return (KFILE*)-1;

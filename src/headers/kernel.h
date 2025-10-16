@@ -20,6 +20,6 @@
 #include "render.h"
 #include "colors.h"
 #include "mem.h"
-
+#include "paging.h"
 
 #endif

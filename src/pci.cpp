@@ -177,10 +177,10 @@ void PCIShowDevices()
 	printf("BUS %x, DEV %x, FN %x ", bus, device, functions);
 	printf("= VEN %h, DEV %h, HEAD %d: ", dev->vendor_id, dev->device_id, dev->header_type);
 
-	PCIBusMastering(dev);
-	PCIGeneralDevice *rtl;
-	PCIGetGeneralDevice(dev, rtl);
-	if(rtl->base_address[0]&0x1){
+	//PCIBusMastering(dev);
+	//PCIGeneralDevice *rtl;
+	//PCIGetGeneralDevice(dev, rtl);
+	/*if(rtl->base_address[0]&0x1){
 		printf("/n   IOMAPPED-%d ",rtl->base_address[0]&~0x3);
 	}
 	else{
@@ -191,7 +191,7 @@ void PCIShowDevices()
 		uint32 size=~barMask+1;
 		PCIWriteWord(bus,device,functions,0x10,base);
 		printf(" size: %d",size);
-	}
+	}*/
 
 	if (dev->class_id <= 20)
 	{

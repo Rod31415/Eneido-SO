@@ -60,6 +60,8 @@
   "files.associations": {
     "functions.h": "c",
     "compare": "cpp",
-    "syscall.h": "c"
+    "syscall.h": "c",
+    "stdio.h": "c",
+    "stdbool.h": "c"
   }
 }

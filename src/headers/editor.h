@@ -4,6 +4,8 @@
 #include "utilities.h"
 #include "vfs.h"
 #include "colors.h"
+#include "mem.h"
+
 
 void initEditor(char* filename);
 void loopEditor();

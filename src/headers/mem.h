@@ -33,7 +33,7 @@ class BuddyAllocator{
   public:
     BuddyAllocator();
 
-    void init(void * start,uint32 heapS);
+    void init(void * start,uint32 heapS,BuddyNode* pool,uint32* count);
     
     void buddySplit(BuddyNode* N);
 
@@ -48,6 +48,8 @@ class BuddyAllocator{
     private:
     BuddyNode* rootBuddyAllocator;
     void* heapStart;
+    BuddyNode* newPool;
+    uint32* newCount;
     uint32 heapSize;
     uint32 maxOrder;
 
@@ -56,6 +58,11 @@ class BuddyAllocator{
 void initAlloc();
 void* kalloc(uint32 size);
 bool kfree(void* ptr);
+
+
+void initPAlloc();
+void* palloc(uint32 size);
+bool pfree(void* ptr);
 
 #endif 
 

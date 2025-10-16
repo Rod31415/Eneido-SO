@@ -368,14 +368,7 @@ void detectCommands()
 
 	else if (argc >= 2 && strcmp(argv[0], "doen") == 0)
 	{
-		/*backspace();
-		DIR file = searchFile(argv[1]);
-		if (file.name[0] == 0)
-		{
-			initInterpreterByArgv(argv[1]);
-		}
-		else
-		{
+		backspace();
 			uint8 opt1 = 0, opt2 = 0;
 			for (uint32 i = 2; i < argc; i++)
 			{
@@ -387,8 +380,8 @@ void detectCommands()
 			opt2 = 1;
 	}
 			}
-			initInterpreterByFile(file, opt1, opt2);
-		}*/
+			initInterpreterByFile(argv[1], opt1, opt2);
+		
 		new_line_term();
 	}
 
@@ -463,6 +456,10 @@ void detectCommands()
 			printf("ARCHIVO DE FORMATO NO DISPONIBLE");
 		}
 
+	}
+	else if(argc == 2 && strcmp(argv[0], "edit")== 0 ){
+		editor(argv[1]);
+    	init_term(mboot);
 	}
 	else if(argc ==1 &&strcmp(argv[0],"mouse")==0){
 		backspace();

@@ -41,6 +41,7 @@ vbe_mode_info_struct *vbe = (vbe_mode_info_struct *)(uint32)mboot->vbe_mode_info
 	//initMouse();
 	initKeyboard();
 	
+  //setupPaging();
 
 	initRootDirectoryWithModules(mboot);
 

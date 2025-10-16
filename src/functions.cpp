@@ -278,5 +278,5 @@ void update_cursor(uint32 x, uint32 y)
 
 void putChar(int32 x, int32 y, char character, uint8 color)
 {
-	draw_char(x * FontWidth, y * FontHeight, character, color);
+	draw_char(x * FontWidth, y * FontHeight, character, actualColor);
 }

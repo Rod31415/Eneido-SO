@@ -2,45 +2,40 @@
 #include <stdbool.h>
 
 void print_hex(unsigned char* buffer, int num) {
-    for (int i = 0; i < num; i++) {
+    /*for (int i = 1; i < num; i++) {
         if (i % 10 == 0) {
             printf("\n");
         }
 
-        printf("%.2X ", buffer[i]);
-    }
+        printf("%.2X ", buffer[i-1]);
+    }*/
 
     printf("\n");
 }
 
 int main(int argc, char* argv[]) {
-    FILE* f = fopen(argv[1], "r");
-    unsigned char buffer[128];
-    int i=0;
-    while((buffer[i++]=fgetc(f))!=EOF);
-    print_hex(buffer, i-1);
+    setvbuf(stdout,NULL,_IONBF,0);
+  if(argc<2)return -1;
+  FILE *f=fopen(argv[1],"r");
+  if(f==0){return -1;fclose(f);}
+  char buf[1024];
+  int num=0;
+  while((buf[num++]=fgetc(f))!=EOF);
 
-    /*while (true) {
-        char cmd;
-        int loc;
-        scanf("%c%d", &cmd, &loc);
-
-        if (cmd == 'p') {
-            print_hex(buffer + loc, 10);
+  for (int i = 0; i < num; i++) {
+        if (i % 10 == 0&&i!=0) {
+            printf(" ");
+		for(int j=0;j<10;j++){
+	    		printf("%c ",buf[i-10+j]);
+	    	}
+		printf("\n");
         }
 
-        if (cmd == 'e') {
-            scanf("%x", buffer + loc);
-        }
-
-        if (cmd == 's') {
-            break;
-        }
+        printf("%.2X ", buf[i]);
     }
-    
-    fclose(f);
-    f = fopen(argv[1], "w");
-    fwrite(buffer, 1, 1024, f);
-    fclose(f);*/
-    return 0;
+
+    printf("\n");
+  
+  fclose(f);
+  return 0;
 }

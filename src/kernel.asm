@@ -18,6 +18,7 @@ DD 32
 
 section .text 
 global start
+global stack_top
 extern _main
 start:
     mov esp, stack_top

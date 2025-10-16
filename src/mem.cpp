@@ -4,8 +4,8 @@ uint32 nodeCount=0;
 
 
 
-static BuddyNode* createNode(void *addr,uint32 size){
-  BuddyNode* n=&nodePool[nodeCount++];
+static BuddyNode* createNode(void *addr,uint32 size,BuddyNode* pool,uint32* count){
+  BuddyNode* n=&pool[(*count)++];
   //printf(" Nodo :%d  ",nodeCount);
   n->state=FREE;
   n->size=size;
@@ -21,21 +21,24 @@ BuddyAllocator::BuddyAllocator() {
       //rootBuddyAllocator=createNode(0,heapS);
     
       //nodeCount=0;
-
+      //BuddyNode*eclaration matches 'void BuddyAlloca* newPool;
+      //uint32* newCount;
 }
-void BuddyAllocator::init(void * start,uint32 heapS){
-      heapStart=(void*)HEAP;
-      rootBuddyAllocator=createNode(0,HEAPSIZE);
+void BuddyAllocator::init(void * start,uint32 heapS,BuddyNode* pool,uint32* count){
+      this->heapStart=start;
+      rootBuddyAllocator=createNode(0,heapS,pool,count);
     
-      nodeCount=1;
+      (*count)=1;
+      this->newPool=pool;
+      this->newCount=count;
 }
 
 void BuddyAllocator::buddySplit(BuddyNode* N){
       if(N->state!=FREE||N->size<=MINBLOCK)return;
       
       uint32 half=N->size/2;
-      N->left=createNode(N->addr,half);
-      N->right=createNode(N->addr+half,half);
+      N->left=createNode(N->addr,half,this->newPool,this->newCount);
+      N->right=createNode(N->addr+half,half,this->newPool,this->newCount);
 }
 
 void *BuddyAllocator::buddyAlloc(BuddyNode* N, uint32 size){
@@ -48,7 +51,7 @@ void *BuddyAllocator::buddyAlloc(BuddyNode* N, uint32 size){
         if(N->size==size){
           N->state=USED;
           
-          return ((void*)((uint32)heapStart+(uint32)N->addr));
+          return ((void*)((uint32)this->heapStart+(uint32)N->addr));
         }
         if(N->size>size){
 
@@ -78,7 +81,7 @@ bool BuddyAllocator::buddyFree(BuddyNode* N,void* ptr){
       if(!N)return false;
 
       if(N->state==USED){
-        if((void*)((uint32)heapStart+(uint32)N->addr)==ptr){
+        if((void*)((uint32)this->heapStart+(uint32)N->addr)==ptr){
           N->state=FREE;
         return true;
         }
@@ -112,20 +115,50 @@ bool BuddyAllocator::bfree(void* ptr){
       return buddyFree(rootBuddyAllocator,ptr);
 }
 
-BuddyAllocator newalloc;
+BuddyAllocator KernelAllocator;
+
+
+
 
 void initAlloc(){
-  newalloc.init((void*)HEAPSTART,HEAPSIZE);
+  KernelAllocator.init((void*)HEAPSTART,HEAPSIZE,(BuddyNode*)nodePool,&nodeCount);
 }
 
 void* kalloc(uint32 size){
 
-  newalloc.balloc(size);
+  KernelAllocator.balloc(size);
 
 }
 
 bool kfree(void* ptr){
 
-  newalloc.bfree(ptr);
+  KernelAllocator.bfree(ptr);
+
+}
+
+
+BuddyAllocator PageAllocator;
+
+#define PAGESTART 0x4000000
+
+#define PAGESIZE  0x2000000
+
+BuddyNode pagePool[(PAGESIZE/4096)*2-1];
+uint32 pageCount=0;
+
+
+void initPAlloc(){
+  PageAllocator.init((void*)PAGESTART,PAGESIZE,(BuddyNode*)pagePool,&pageCount);
+}
+
+void* palloc(uint32 size){
+
+  PageAllocator.balloc(size);
+
+}
+
+bool pfree(void* ptr){
+
+  PageAllocator.bfree(ptr);
 
 }

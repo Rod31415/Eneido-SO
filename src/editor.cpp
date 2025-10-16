@@ -1,8 +1,6 @@
 #include "headers/editor.h"
 
-uint32 col = 0, row = 0;
-
-uint32 maxRowsInFile = 0;
+uint32 maxRows = 0;
 #define colOffSet 2
 #define rowOffSet 0
 
@@ -19,7 +17,22 @@ uint32 maxRowsInFile = 0;
 
 #define COMBINE_WORD(msb, lsb) (((uint32)(msb) << 16) | lsb)
 
-char lineStr[1000][width];
+
+typedef struct {
+  char **lines;
+  int row;
+  int col;
+}TextBuffer;
+
+
+TextBuffer GeneralTextBuff;
+
+void insertStrLine(char* buff,int index,char letter){
+  for(int i=80;i>index;i--){
+    buff[i]=buff[i-1];
+  }
+  buff[index]=letter;
+}
 
 bool kbhit()
 {
@@ -33,12 +46,12 @@ uint8 letter;
 uint32 localX = 0, localY = 0;
 KFILE *localFile;
 
-void drawSide()
+void drawSide(int max)
 {
 	draw_rect(0, 0, 16, height * 16, COLOR_LIGHT_GRAY);
 	changeColor(COLOR_BLACK);
 	change_ground_color(false);
-	for (uint32 i = 0; i <= height - 1; i++)
+	for (uint32 i = 0; i <= max ; i++)
 	{
 		draw_rect(0, i * 16, 16, 16, COLOR_LIGHT_GRAY);
 		gotoxy((i < 10) ? 1 : 0, i);
@@ -65,165 +78,151 @@ void drawBottom()
 	gotoxy(2, 0);
 	changeColor(COLOR_WHITE);
 }
-char buff[512 * 8];
+char* buff;
 
 void initEditor(char *filename)
 {
-
-	col = 0;
-	row = 0;
-
-	for (int i = 0; i < height; i++)
-	{
-		for (int j = 0; j < width; j++)
-		{
-			lineStr[i][j] = 0;
-		}
-	}
-
 	localFile = kopen(filename,O_RDWR);
 	address = (COMBINE_WORD(localFile->entry->FstClusHI, localFile->entry->FstClusLO) * 512 + 0x800000);
 	if (localFile == (KFILE*)-1)
 		return;
 	cls(COLOR_BLACK);
+  buff=(char*)kalloc(localFile->entry->FileSize*512);
+	kgets(buff, 512, localFile);
 
-	kgets(buff, sizeof(buff), localFile);
+  GeneralTextBuff.lines=(char**)kalloc(512);
+  GeneralTextBuff.row=0;
+  GeneralTextBuff.col=0;
+  
 
-	uint32 rowIndex = 0, colIndex = 0;
-
+  GeneralTextBuff.lines[0]=(char*)kalloc(80);
+  gotoxy(colOffSet,0);
 	for (uint32 u = 0; u < localFile->entry->FileSize * 512; u++)
 	{
+    GeneralTextBuff.lines[GeneralTextBuff.row][GeneralTextBuff.col++]=buff[u];
+    if(buff[u]==0xA||buff[u]==0xD){GeneralTextBuff.lines[GeneralTextBuff.row][GeneralTextBuff.col-1]=0;GeneralTextBuff.row++;GeneralTextBuff.col=0;GeneralTextBuff.lines[GeneralTextBuff.row]=(char*)kalloc(80);}
+    //if(GeneralTextBuff.lines[GeneralTextBuff.line_count][charIndex-1]!=0xA)
+    if(buff[u]==0){GeneralTextBuff.lines[GeneralTextBuff.row+1][0]=0;break;}
 
-		if (buff[u] == 13)
-		{
-			lineStr[rowIndex][colIndex] = 0;
-			colIndex = 0;
-			rowIndex++;
-			u++;
-		}
-		if (buff[u] == 0)
-			break;
-		lineStr[rowIndex][colIndex] = (char)buff[u];
-		colIndex++;
 	}
 	changeColor(COLOR_WHITE);
-	for (uint32 i = 0; i < height; i++)
-	{
-		gotoxy(colOffSet, i);
-		uint32 index = 0;
-		while (lineStr[i][index] != 0)
-		{
-			printChr(lineStr[i][index]);
-			index++;
-		}
-	}
+  kfree(buff);
+  maxRows=GeneralTextBuff.row;
 
-	drawSide();
+  GeneralTextBuff.row=0;
+  GeneralTextBuff.col=0;
+
+
+  /*for(int i=0;i<16;i++){
+  printf("%d ",buff[i]);
+  }*/
+
+  while(GeneralTextBuff.row<=maxRows){
+    gotoxy(colOffSet,GeneralTextBuff.row);
+    for(uint32 i=0;i<80;i++){
+      //printf("%d ",GeneralTextBuff.lines[GeneralTextBuff.row][i]);
+      printChr(GeneralTextBuff.lines[GeneralTextBuff.row][i]);
+      if(GeneralTextBuff.lines[GeneralTextBuff.row][i]==0){break;}
+    }
+  GeneralTextBuff.row++;
+  }
+
+	drawSide(maxRows);
 	drawBottom();
-	// update_cursor(0,0);
+
+GeneralTextBuff.row=0;
+GeneralTextBuff.col=0;
+
+
+	update_cursor(colOffSet,0);
 
 	letter = enter;
 	loopEditor();
 }
 
+void printAll(){
+int auxA=GeneralTextBuff.row,auxB=GeneralTextBuff.col;
+GeneralTextBuff.row=0;
+GeneralTextBuff.col=0;
+
+while(GeneralTextBuff.row<=maxRows){
+draw_rect(colOffSet*8,GeneralTextBuff.row*16,(width- colOffSet)*8,16,COLOR_BLACK);
+
+    gotoxy(colOffSet,GeneralTextBuff.row);
+    for(uint32 i=0;i<80;i++){
+      //printf("%d ",GeneralTextBuff.lines[GeneralTextBuff.row][i]);
+      printChr(GeneralTextBuff.lines[GeneralTextBuff.row][i]);
+      if(GeneralTextBuff.lines[GeneralTextBuff.row][i]==0){break;}
+    }
+  GeneralTextBuff.row++;
+  }
+
+
+GeneralTextBuff.row=auxA;
+GeneralTextBuff.col=auxB;
+}
+
+
 void printLine()
 {
-
-	uint8 buffer[81 - colOffSet];
-	memset((uint32)buffer, 32, 81 - colOffSet - 1);
-	buffer[81 - colOffSet] = 0;
-	gotoxy(colOffSet, row);
-	printf((int8 *)buffer);
-
-	gotoxy(colOffSet, row);
-	uint32 index = 0;
-	while (lineStr[row][index] != 0)
-	{
-		printChr(lineStr[row][index]);
-		index++;
-	}
+  draw_rect(colOffSet*8,GeneralTextBuff.row*16,(width- colOffSet)*8,16,COLOR_BLACK);
+gotoxy(colOffSet,GeneralTextBuff.row);
+    for(uint32 i=0;i<80;i++){
+      
+      printChr(GeneralTextBuff.lines[GeneralTextBuff.row][i]);
+      if(GeneralTextBuff.lines[GeneralTextBuff.row][i]==0){break;}
+}
 }
 
-void checkSize()
-{
-	uint32 size = 0;
-	for (uint32 h = 0; h < 1000; h++)
-	{
-		if (lineStr[h][0] == 0)
-		{
-			size = h * 80;
-			break;
-		}
-	}
-	// localFile.size = (uint32)(size / 512) + 1;
-	// modifyFile(localFile.name, localFile);
+void splitAtIndex(char* buff0, char* buff1, int index){
+for(int i=index;i<80;i++){
+  buff1[i-index]=buff0[i];
+  buff0[i]=0;
+}
 }
 
-void refreshMaxFileRows()
-{
-	if (row > maxRowsInFile)
-		maxRowsInFile = row;
+void combineAtIndex(char* buff0, char* buff1, int index){
+for(int i=index;i<80;i++){
+  buff0[i]=buff1[i-index];
+  buff1[i-index]=0;
+}
 }
 
-void passRow(uint32 r)
-{
+void removeLinePointer(int row){
 
-	for (uint32 i = height; i > r + 1; i--)
-	{
-		memcpy((uint32)lineStr[i - 1], (uint32)lineStr[i], 80);
-	}
+  for(int i=row;i<maxRows+1;i++){
+    GeneralTextBuff.lines[i]=GeneralTextBuff.lines[i+1];
+  }
+maxRows--;
+  kfree(GeneralTextBuff.lines[maxRows+1]);
 
-	memset((uint32)lineStr[r + 1], 0, 80);
-	// lineStr[r+1][0]=' ';
-	splitStr(lineStr[r], lineStr[r + 1], col);
-	int8 zerob[40];
-	memset((uint32)zerob, 32, 40);
-	for (uint32 i = 0; i < height - 1; i++)
-	{
-		gotoxy(colOffSet, i);
-		printf(zerob);
-		gotoxy(colOffSet, i);
-		uint32 index = 0;
-		while (lineStr[i][index] != 0)
-		{
-			printChr(lineStr[i][index]);
-			index++;
-		}
-	}
+  //GeneralTextBuff.lines[row][0]=0xFE;
+
+  //for(int i=0;i<80;i++)
+  //GeneralTextBuff.lines[row+1][i]=0x0;
 }
 
-void quitRow(uint32 r)
-{
-	int8 buff[80];
-	col = lenghtStr(lineStr[r - 1]);
-	strcpy(buff, lineStr[r]);
-	for (uint32 i = r + 1; i < height; i++)
-	{
-		memcpy((uint32)lineStr[i], (uint32)lineStr[i - 1], 40);
-	}
-	appendStr(lineStr[r - 1], buff);
 
-	int8 zerob[79];
-	memset((uint32)zerob, 32, 79);
-	for (uint32 i = 0; i < height - 1; i++)
-	{
-		gotoxy(colOffSet, i);
-		printf(zerob);
-		gotoxy(colOffSet, i);
-		uint32 index = 0;
-		while (lineStr[i][index] != 0)
-		{
-			printChr(lineStr[i][index]);
-			index++;
-		}
-	}
-	drawSide();
-	drawBottom();
+
+
+void passLinePointer(int row){
+  int max=maxRows+2;
+
+  GeneralTextBuff.lines[row+1]=(char*)kalloc(80);
+  for(int i=max;i>row+1;i--){
+    GeneralTextBuff.lines[i]=GeneralTextBuff.lines[i-1];
+  }
+maxRows++;
+
+  //GeneralTextBuff.lines[row][0]=0xFE;
+
+  for(int i=0;i<80;i++)
+  GeneralTextBuff.lines[row+1][i]=0x0;
 }
 
 void loopEditor()
 {
-	update_cursor(col + colOffSet, row);
+	update_cursor(GeneralTextBuff.col + colOffSet, GeneralTextBuff.row);
 	eatKeyBuffered();
 	while (1)
 	{
@@ -235,101 +234,97 @@ void loopEditor()
 		if (letter == esc)
 		{
 
-			uint32 rowIndex = 0, colIndex = 0;
 			uint32 u;
 			bool ret = false;
+      buff=(char*)kalloc(localFile->entry->FileSize * 512);
+GeneralTextBuff.row=0;
+GeneralTextBuff.col=0;
+
 			for (u = 0; u < localFile->entry->FileSize * 512; u++)
 			{
-				if (ret)
-				{
-					buff[u] = 0;
-				}
-				else
-				{
-					if (lineStr[rowIndex][colIndex] == 0)
-					{
-						if (rowIndex == maxRowsInFile || lineStr[0][colIndex + 1] == 0)
-						{
-							ret = true;
-						}
-						else
-						{
-							rowIndex++;
-							colIndex = 0;
-							buff[u] = 13;
-							u++;
-						}
-					}
-					buff[u] = (uint8)lineStr[rowIndex][colIndex];
-					colIndex++;
-				}
+          if(GeneralTextBuff.row>maxRows){
+            buff[u-1]=0;
+            break;
+          }
+          if(GeneralTextBuff.lines[GeneralTextBuff.row][GeneralTextBuff.col]==0){
+            buff[u]=0xA;
+            GeneralTextBuff.row++;
+            GeneralTextBuff.col=0;
+            continue;
+          }
+          buff[u]=GeneralTextBuff.lines[GeneralTextBuff.row][GeneralTextBuff.col++];
 			}
-			buff[u+1]=0;
 			kseek(0, localFile);
-			kputs(buff, u, localFile);
-			break;
+			kputs(buff, u+1, localFile);
+		  break;
 		}
-		uint32 lgtStr = lenghtStr(lineStr[row]);
-		if (letter == left && col > 0)
+		if (letter == left && GeneralTextBuff.col > 0)
 		{
-			col--;
+			GeneralTextBuff.col--;
 			printLine();
-			update_cursor(col + colOffSet, row);
+			update_cursor(GeneralTextBuff.col + colOffSet, GeneralTextBuff.row);
 		}
-		else if (letter == right && col < lgtStr)
+		else if (letter == right && GeneralTextBuff.col < lenghtStr(GeneralTextBuff.lines[GeneralTextBuff.row]))
 		{
-			col++;
+			GeneralTextBuff.col++;
 			printLine();
-			update_cursor(col + colOffSet, row);
+			update_cursor(GeneralTextBuff.col + colOffSet, GeneralTextBuff.row);
 		}
-		else if (letter == down && row < height)
-		{
-			printLine();
-			row++;
-			col = (col > lenghtStr(lineStr[row])) ? lenghtStr(lineStr[row]) : col;
-			printLine();
-			update_cursor(col + colOffSet, row);
-			refreshMaxFileRows();
-		}
-		else if (letter == up && row > 0)
+		else if (letter == down && GeneralTextBuff.row < maxRows )
 		{
 			printLine();
-			row--;
-			col = (col > lenghtStr(lineStr[row])) ? lenghtStr(lineStr[row]) : col;
+			GeneralTextBuff.row++;
+			GeneralTextBuff.col = (GeneralTextBuff.col > lenghtStr(GeneralTextBuff.lines[GeneralTextBuff.row])) ? lenghtStr(GeneralTextBuff.lines[GeneralTextBuff.row]) : GeneralTextBuff.col;
 			printLine();
-			update_cursor(col + colOffSet, row);
+			update_cursor(GeneralTextBuff.col + colOffSet, GeneralTextBuff.row);
 		}
-		else if (letter == enter && row < height)
+		else if (letter == up && GeneralTextBuff.row > 0)
 		{
-			passRow(row);
-			row++;
-			col = 0;
-			update_cursor(col + colOffSet, row);
-			refreshMaxFileRows();
+			printLine();
+			GeneralTextBuff.row--;
+			GeneralTextBuff.col = (GeneralTextBuff.col > lenghtStr(GeneralTextBuff.lines[GeneralTextBuff.row])) ? lenghtStr(GeneralTextBuff.lines[GeneralTextBuff.row]) : GeneralTextBuff.col;
+			printLine();
+			update_cursor(GeneralTextBuff.col + colOffSet, GeneralTextBuff.row);
+		}
+		else if (letter == enter && GeneralTextBuff.row < height)
+		{
+
+      passLinePointer(GeneralTextBuff.row);
+      splitAtIndex(GeneralTextBuff.lines[GeneralTextBuff.row],GeneralTextBuff.lines[GeneralTextBuff.row+1],GeneralTextBuff.col);
+      drawSide(maxRows);
+			GeneralTextBuff.row++;
+			GeneralTextBuff.col = 0;
+      printAll();
+			update_cursor(GeneralTextBuff.col + colOffSet, GeneralTextBuff.row);
+
 		}
 		else if (letter == del)
 		{
-			if (col <= 0 && row > 0)
+			if (GeneralTextBuff.col == 0 && GeneralTextBuff.row > 0)
 			{
-				quitRow(row);
-				row--;
-				update_cursor(col + colOffSet, row);
-				refreshMaxFileRows();
-			}
-			else if (col > 0)
+        combineAtIndex(GeneralTextBuff.lines[GeneralTextBuff.row-1],GeneralTextBuff.lines[GeneralTextBuff.row],lenghtStr(GeneralTextBuff.lines[GeneralTextBuff.row-1]));
+				removeLinePointer(GeneralTextBuff.row);
+        drawSide(maxRows);
+				GeneralTextBuff.row--;
+				update_cursor(GeneralTextBuff.col + colOffSet, GeneralTextBuff.row);
+        draw_rect(colOffSet*8,(maxRows+1)*16,(width-colOffSet)*8,16,COLOR_BLACK);
+
+        printAll();
+        }
+			else if (GeneralTextBuff.col > 0)
 			{
-				eraseStr(lineStr[row], col - 1, 1);
-				col--;
+				eraseStr(GeneralTextBuff.lines[GeneralTextBuff.row], GeneralTextBuff.col - 1, 1);
+				GeneralTextBuff.col--;
 				printLine();
-				update_cursor(col + colOffSet, row);
+				update_cursor(GeneralTextBuff.col + colOffSet, GeneralTextBuff.row);
 			}
 		}
 		else if (letter != 0 && letter < 128)
 		{
-			insertStr(lineStr[row], col, (char)letter);
-			col++;
+			insertStrLine(GeneralTextBuff.lines[GeneralTextBuff.row], GeneralTextBuff.col, (char)letter);
+			GeneralTextBuff.col++;
 			printLine();
-			update_cursor(col + colOffSet, row);
+			update_cursor(GeneralTextBuff.col + colOffSet, GeneralTextBuff.row);
 		}
 		refresh();
 	}
